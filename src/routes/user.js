@@ -4,17 +4,17 @@
 
 const Router = require('koa-router');
 
-import { ensureUser } from '../utils/auth';
+import * as auth from '../utils/auth';
 import * as controller from '../controllers/user';
 
-let base_url = '/user';
+let base_url = '/users';
 let router = new Router({ prefix: base_url });
 
 router
-    .post('/list', ensureUser, controller.list)
-    .post('/register', controller.register)
-    .post('/login', controller.login)
-    .post('/logout', ensureUser, controller.logout);
+    .get('/', auth.ensureUser, auth.ensureManager, controller.list)
+    .get('/my/profile', auth.ensureUser, controller.myProfile)
+    .post('/:id/password', auth.ensureUser, auth.ensureManager, controller.updatePassword)
+    .post('/:id/status', auth.ensureUser, auth.ensureManager, controller.updateStatus);
 
 export default {
     baseUrl: base_url,

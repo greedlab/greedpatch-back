@@ -9,6 +9,7 @@ import config from '../config';
 import home from '../routes/home';
 import user from '../routes/user';
 import book from '../routes/book';
+import token from '../routes/token';
 
 const app = new koa();
 
@@ -38,7 +39,9 @@ app
     .use(user.router.routes())
     .use(user.router.allowedMethods())
     .use(book.router.routes())
-    .use(book.router.allowedMethods());
+    .use(book.router.allowedMethods())
+    .use(token.router.routes())
+    .use(token.router.allowedMethods());
 
 // listen
 

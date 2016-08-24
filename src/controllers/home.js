@@ -2,7 +2,7 @@
  * Created by Bell on 16/8/10.
  */
 
-export async function index(ctx) {
+export async function index(ctx, next) {
     ctx.body = {
         registerUser: '<domain>/user/register',
         loginUser: '<domain>/user/login',

@@ -3,8 +3,8 @@
  */
 
 export default {
-    token: 'secret-jwt-token',
-    mongodb: 'mongodb://dev:dev@localhost:27017/node-back-template-dev',
+    token: 'secret-greedpatch-back-token',
+    mongodb: 'mongodb://dev:dev@localhost:27017/greedpatch-back',
     redisOptions: {
 
     }
