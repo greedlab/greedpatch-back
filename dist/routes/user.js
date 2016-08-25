@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _auth = require('../utils/auth');
+var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
 
@@ -23,7 +23,7 @@ var Router = require('koa-router');
 var base_url = '/users';
 var router = new Router({ prefix: base_url });
 
-router.get('/', auth.ensureUser, auth.ensureManager, controller.list).get('/my/profile', auth.ensureUser, controller.myProfile).post('/:id/password', auth.ensureUser, auth.ensureManager, controller.updatePassword).post('/:id/status', auth.ensureUser, auth.ensureManager, controller.updateStatus);
+router.get('/', auth.ensureUser, auth.ensureManager, controller.list).get('/me/profile', auth.ensureUser, controller.myProfile).post('/:id/password', auth.ensureUser, auth.ensureManager, controller.updatePassword).post('/:id/status', auth.ensureUser, auth.ensureManager, controller.updateStatus);
 
 exports.default = {
     baseUrl: base_url,

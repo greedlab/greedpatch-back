@@ -3,10 +3,10 @@
  */
 
 import mongoose from 'mongoose';
-import config from '../config';
 import jwt from 'jsonwebtoken';
 
-import { hashPassword,compareHashString } from '../utils/auth';
+import config from '../config';
+import { hashPassword,compareHashString } from '../utils/encrypt';
 
 mongoose.Promise = global.Promise;
 
@@ -34,13 +34,14 @@ User.pre('save', async function preSave(next) {
 
 User.methods.validatePassword = async function validatePassword(password) {
     const user = this;
-    return compareHashString(password, user.password);
+    const result = await compareHashString(password, user.password);
+    return result;
 };
 
 User.methods.generateToken = function generateToken() {
     const user = this;
-    const iat = Date.now();
-    const exp = iat + 30 * 24 * 60 * 60 * 1000;
+    const iat = Date.now() / 1000;
+    const exp = iat + 30 * 24 * 60 * 60;
     const scope = 'default';
     return jwt.sign({iat, exp, id: user.id, scope}, config.token);
 };
@@ -54,8 +55,8 @@ User.methods.generateCheckPatchToken = function generateCheckPatchToken() {
 
 User.methods.generateSetPasswordToken = function generateSetPasswordToken() {
     const user = this;
-    const iat = Date.now();
-    const exp = iat + 24 * 60 * 60 * 1000;
+    const iat = Date.now() / 1000;
+    const exp = iat + 24 * 60 * 60;
     const scope = 'all';
     return jwt.sign({iat, exp, id: user.id, scope}, config.token);
 };

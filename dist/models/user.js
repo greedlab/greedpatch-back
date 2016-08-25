@@ -10,15 +10,15 @@ var _mongoose = require('mongoose');
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 
-var _config = require('../config');
-
-var _config2 = _interopRequireDefault(_config);
-
 var _jsonwebtoken = require('jsonwebtoken');
 
 var _jsonwebtoken2 = _interopRequireDefault(_jsonwebtoken);
 
-var _auth = require('../utils/auth');
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _encrypt = require('../utils/encrypt');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -54,7 +54,7 @@ User.pre('save', function () {
                     case 3:
                         _context.prev = 3;
                         _context.next = 6;
-                        return (0, _auth.hashPassword)(user.password);
+                        return (0, _encrypt.hashPassword)(user.password);
 
                     case 6:
                         hash = _context.sent;
@@ -84,15 +84,20 @@ User.pre('save', function () {
 
 User.methods.validatePassword = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(password) {
-        var user;
+        var user, result;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
                         user = this;
-                        return _context2.abrupt('return', (0, _auth.compareHashString)(password, user.password));
+                        _context2.next = 3;
+                        return (0, _encrypt.compareHashString)(password, user.password);
 
-                    case 2:
+                    case 3:
+                        result = _context2.sent;
+                        return _context2.abrupt('return', result);
+
+                    case 5:
                     case 'end':
                         return _context2.stop();
                 }
@@ -109,8 +114,8 @@ User.methods.validatePassword = function () {
 
 User.methods.generateToken = function generateToken() {
     var user = this;
-    var iat = Date.now();
-    var exp = iat + 30 * 24 * 60 * 60 * 1000;
+    var iat = Date.now() / 1000;
+    var exp = iat + 30 * 24 * 60 * 60;
     var scope = 'default';
     return _jsonwebtoken2.default.sign({ iat: iat, exp: exp, id: user.id, scope: scope }, _config2.default.token);
 };
@@ -124,8 +129,8 @@ User.methods.generateCheckPatchToken = function generateCheckPatchToken() {
 
 User.methods.generateSetPasswordToken = function generateSetPasswordToken() {
     var user = this;
-    var iat = Date.now();
-    var exp = iat + 24 * 60 * 60 * 1000;
+    var iat = Date.now() / 1000;
+    var exp = iat + 24 * 60 * 60;
     var scope = 'all';
     return _jsonwebtoken2.default.sign({ iat: iat, exp: exp, id: user.id, scope: scope }, _config2.default.token);
 };

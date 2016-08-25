@@ -804,17 +804,17 @@ var _token = require('../models/token');
 
 var _token2 = _interopRequireDefault(_token);
 
-var _unvalidToken = require('../utils/unvalid-token');
+var _unvalidToken = require('../tools/unvalid-token');
 
 var _regex = require('../utils/regex');
 
 var regex = _interopRequireWildcard(_regex);
 
-var _auth = require('../utils/auth');
+var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
 
-var _token3 = require('../utils/token');
+var _token3 = require('../tools/token');
 
 var token_util = _interopRequireWildcard(_token3);
 

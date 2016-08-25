@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _auth = require('../utils/auth');
+var _auth = require('../tools/auth');
 
 var _book = require('../controllers/book');
 

@@ -12,7 +12,7 @@ var _user = require('../controllers/user');
 
 var user = _interopRequireWildcard(_user);
 
-var _auth = require('../utils/auth');
+var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
 
@@ -27,7 +27,7 @@ var Router = require('koa-router');
 var base_url = '/';
 var router = new Router({ prefix: base_url });
 
-router.get('/', auth.ensureUser, home.index).post('/register', user.register).post('/login', user.login).post('/logout', auth.ensureUser, user.logout).post('/modify-my-password', auth.ensureUser, user.modifyMyPassword).post('/reset-password', user.resetPassword).post('/set-my-password', auth.ensureUser, auth.ensureSetPasswordToken, user.setMyPassword);
+router.get('/', home.index).post('/register', user.register).post('/login', user.login).post('/logout', auth.ensureUser, user.logout).post('/modify-my-password', auth.ensureUser, user.modifyMyPassword).post('/reset-password', user.resetPassword).post('/set-my-password', auth.ensureUser, auth.ensureSetPasswordToken, user.setMyPassword);
 
 exports.default = {
     baseUrl: base_url,

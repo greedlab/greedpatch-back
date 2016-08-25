@@ -8,8 +8,10 @@ import passport from 'koa-passport';
 import config from '../config';
 import home from '../routes/home';
 import user from '../routes/user';
-import book from '../routes/book';
 import token from '../routes/token';
+import project from '../routes/project';
+import patch from '../routes/patch';
+import permission from '../routes/permission';
 
 const app = new koa();
 
@@ -38,10 +40,14 @@ app
     .use(home.router.allowedMethods())
     .use(user.router.routes())
     .use(user.router.allowedMethods())
-    .use(book.router.routes())
-    .use(book.router.allowedMethods())
     .use(token.router.routes())
-    .use(token.router.allowedMethods());
+    .use(token.router.allowedMethods())
+    .use(project.router.routes())
+    .use(project.router.allowedMethods())
+    .use(patch.router.routes())
+    .use(patch.router.allowedMethods())
+    .use(permission.router.routes())
+    .use(permission.router.allowedMethods());
 
 // listen
 

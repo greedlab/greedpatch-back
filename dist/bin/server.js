@@ -32,13 +32,21 @@ var _user = require('../routes/user');
 
 var _user2 = _interopRequireDefault(_user);
 
-var _book = require('../routes/book');
-
-var _book2 = _interopRequireDefault(_book);
-
 var _token = require('../routes/token');
 
 var _token2 = _interopRequireDefault(_token);
+
+var _project = require('../routes/project');
+
+var _project2 = _interopRequireDefault(_project);
+
+var _patch = require('../routes/patch');
+
+var _patch2 = _interopRequireDefault(_patch);
+
+var _permission = require('../routes/permission');
+
+var _permission2 = _interopRequireDefault(_permission);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -64,7 +72,7 @@ app.use(_koaPassport2.default.initialize());
 
 // router
 
-app.use(_home2.default.router.routes()).use(_home2.default.router.allowedMethods()).use(_user2.default.router.routes()).use(_user2.default.router.allowedMethods()).use(_book2.default.router.routes()).use(_book2.default.router.allowedMethods()).use(_token2.default.router.routes()).use(_token2.default.router.allowedMethods());
+app.use(_home2.default.router.routes()).use(_home2.default.router.allowedMethods()).use(_user2.default.router.routes()).use(_user2.default.router.allowedMethods()).use(_token2.default.router.routes()).use(_token2.default.router.allowedMethods()).use(_project2.default.router.routes()).use(_project2.default.router.allowedMethods()).use(_patch2.default.router.routes()).use(_patch2.default.router.allowedMethods()).use(_permission2.default.router.routes()).use(_permission2.default.router.allowedMethods());
 
 // listen
 

@@ -6,13 +6,13 @@ const Router = require('koa-router');
 
 import * as home from '../controllers/home';
 import * as user from '../controllers/user';
-import * as auth from '../utils/auth';
+import * as auth from '../tools/auth';
 
 let base_url = '/';
 let router = new Router({ prefix: base_url });
 
 router
-    .get('/', auth.ensureUser, home.index)
+    .get('/', home.index)
     .post('/register', user.register)
     .post('/login', user.login)
     .post('/logout', auth.ensureUser, user.logout)

@@ -2,16 +2,10 @@
  * Created by Bell on 16/8/10.
  */
 
-import bcrypt from 'bcrypt';
-import Promise from 'bluebird';
-
 import User from '../models/user';
 import config from '../config';
 import { verify } from 'jsonwebtoken';
-import { existed as unvalid_token_existed }  from '../utils/unvalid-token';
-
-const hashAsync = Promise.promisify(bcrypt.hash);
-const compareAsync = Promise.promisify(bcrypt.compare);
+import { existed as unvalid_token_existed }  from './unvalid-token';
 
 /**
  * ensure user login successfully
@@ -22,8 +16,12 @@ const compareAsync = Promise.promisify(bcrypt.compare);
  */
 export async function ensureUser(ctx, next) {
     const token = getToken(ctx);
-
     if (!token) {
+        ctx.throw(401);
+    }
+
+    const existed = await unvalid_token_existed(token);
+    if (existed) {
         ctx.throw(401);
     }
 
@@ -34,18 +32,26 @@ export async function ensureUser(ctx, next) {
         ctx.throw(401);
     }
 
-    const user = await User.findById(payload.id, '-password');
+    if (payload.exp && payload.exp < Date.now() / 1000) {
+        ctx.throw(401);
+    }
+
+    if (!payload.id) {
+        ctx.throw(401);
+    }
+
+    let user = null;
+    try {
+        user = await User.findById(payload.id, {password: 0, __v: 0});
+    } catch (err) {
+        ctx.throw(401);
+    }
     if (!user) {
         ctx.throw(401);
     }
 
     if (user.status != 0) {
-        ctx.throw(403);
-    }
-
-    const existed = await unvalid_token_existed(token);
-    if (existed) {
-        ctx.throw(401);
+        ctx.throw(403, 'user is disable');
     }
 
     return next();
@@ -59,14 +65,8 @@ export async function ensureUser(ctx, next) {
  * @returns {*}
  */
 export async function ensureSetPasswordToken(ctx, next) {
-    const token = getToken(ctx);
-    if (!token) {
-        ctx.throw(401);
-    }
-    let payload = null;
-    try {
-        payload = verify(token, config.token);
-    } catch (err) {
+    const payload = getPayload(ctx);
+    if (!payload) {
         ctx.throw(401);
     }
     const scope = payload.scope;
@@ -84,17 +84,7 @@ export async function ensureSetPasswordToken(ctx, next) {
  * @returns {*}
  */
 export async function ensureManager(ctx, next) {
-    const token = getToken(ctx);
-    if (!token) {
-        ctx.throw(401);
-    }
-    let payload = null;
-    try {
-        payload = verify(token, config.token);
-    } catch (err) {
-        ctx.throw(401);
-    }
-    const user = await User.findById(payload.id, '-password');
+    const user = await getUser(ctx);
     if (!user) {
         ctx.throw(401);
     }
@@ -141,7 +131,7 @@ export function getPayload(ctx) {
 }
 
 /**
- * get id from ctx.request header
+ * get user ID from ctx.request header
  * @param ctx
  * @returns {*}
  */
@@ -161,28 +151,23 @@ export function getID(ctx) {
 export async function getUser(ctx) {
     const id = getID(ctx);
     if (id) {
-        return await User.findById(id, '-password');
+        return await User.findById(id, {password: 0, __v: 0});
     }
     return null;
 }
 
 /**
- * get hashed string
- *
- * @param string
- * @returns hashed string
- */
-export async function hashString(string) {
-    return await hashAsync(string, 10);
-}
-
-/**
- * compare string with hashed string
- *
- * @param string
- * @param hashedString
+ * get password from user ID
+ * @param userid
  * @returns {*}
  */
-export async function compareHashString(string, hashedString) {
-    return await compareAsync(string, hashedString);
+export async function getPassword(userid) {
+    if (!userid) {
+        return null;
+    }
+    const user = await User.findById(userid);
+    if (!user) {
+        return null;
+    }
+    return user.password;
 }

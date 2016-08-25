@@ -11,6 +11,13 @@ var _bluebird = require('bluebird');
  * Created by Bell on 16/8/10.
  */
 
+/**
+ * get api list
+ *
+ * @example curl -X GET localhost:4002/
+ * @param ctx
+ * @param next
+ */
 var index = exports.index = function () {
     var _ref = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee(ctx, next) {
         return regeneratorRuntime.wrap(function _callee$(_context) {
