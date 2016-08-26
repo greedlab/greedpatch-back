@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.getPassword = exports.getUser = exports.ensureManager = exports.ensureSetPasswordToken = exports.ensureUser = undefined;
+exports.getPassword = exports.getUser = exports.getFullUser = exports.ensureManager = exports.ensureSetPasswordToken = exports.ensureUser = undefined;
 
 var _bluebird = require('bluebird');
 
@@ -49,7 +49,7 @@ var ensureUser = exports.ensureUser = function () {
                             ctx.throw(401);
                         }
 
-                        if (payload.exp && payload.exp < Date.now() / 1000) {
+                        if (payload.exp && payload.exp < Date.now()) {
                             ctx.throw(401);
                         }
 
@@ -190,11 +190,11 @@ var ensureManager = exports.ensureManager = function () {
 
 
 /**
- * get User from ctx.request header
+ * get User with password from ctx.request header
  * @param ctx
  * @returns {*}
  */
-var getUser = exports.getUser = function () {
+var getFullUser = exports.getFullUser = function () {
     var _ref4 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee4(ctx) {
         var id;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
@@ -209,7 +209,7 @@ var getUser = exports.getUser = function () {
                         }
 
                         _context4.next = 4;
-                        return _user2.default.findById(id, { password: 0, __v: 0 });
+                        return _user2.default.findById(id);
 
                     case 4:
                         return _context4.abrupt('return', _context4.sent);
@@ -225,8 +225,51 @@ var getUser = exports.getUser = function () {
         }, _callee4, this);
     }));
 
-    return function getUser(_x7) {
+    return function getFullUser(_x7) {
         return _ref4.apply(this, arguments);
+    };
+}();
+
+/**
+ * get User with out password from ctx.request header
+ * @param ctx
+ * @returns {*}
+ */
+
+
+var getUser = exports.getUser = function () {
+    var _ref5 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee5(ctx) {
+        var id;
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+            while (1) {
+                switch (_context5.prev = _context5.next) {
+                    case 0:
+                        id = getID(ctx);
+
+                        if (!id) {
+                            _context5.next = 5;
+                            break;
+                        }
+
+                        _context5.next = 4;
+                        return _user2.default.findById(id, { password: 0, __v: 0 });
+
+                    case 4:
+                        return _context5.abrupt('return', _context5.sent);
+
+                    case 5:
+                        return _context5.abrupt('return', null);
+
+                    case 6:
+                    case 'end':
+                        return _context5.stop();
+                }
+            }
+        }, _callee5, this);
+    }));
+
+    return function getUser(_x8) {
+        return _ref5.apply(this, arguments);
     };
 }();
 
@@ -238,46 +281,46 @@ var getUser = exports.getUser = function () {
 
 
 var getPassword = exports.getPassword = function () {
-    var _ref5 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee5(userid) {
+    var _ref6 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee6(userid) {
         var user;
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
-                switch (_context5.prev = _context5.next) {
+                switch (_context6.prev = _context6.next) {
                     case 0:
                         if (userid) {
-                            _context5.next = 2;
+                            _context6.next = 2;
                             break;
                         }
 
-                        return _context5.abrupt('return', null);
+                        return _context6.abrupt('return', null);
 
                     case 2:
-                        _context5.next = 4;
+                        _context6.next = 4;
                         return _user2.default.findById(userid);
 
                     case 4:
-                        user = _context5.sent;
+                        user = _context6.sent;
 
                         if (user) {
-                            _context5.next = 7;
+                            _context6.next = 7;
                             break;
                         }
 
-                        return _context5.abrupt('return', null);
+                        return _context6.abrupt('return', null);
 
                     case 7:
-                        return _context5.abrupt('return', user.password);
+                        return _context6.abrupt('return', user.password);
 
                     case 8:
                     case 'end':
-                        return _context5.stop();
+                        return _context6.stop();
                 }
             }
-        }, _callee5, this);
+        }, _callee6, this);
     }));
 
-    return function getPassword(_x8) {
-        return _ref5.apply(this, arguments);
+    return function getPassword(_x9) {
+        return _ref6.apply(this, arguments);
     };
 }();
 

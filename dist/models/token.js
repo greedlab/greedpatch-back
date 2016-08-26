@@ -16,6 +16,7 @@ _mongoose2.default.Promise = global.Promise; /**
 
 var Token = new _mongoose2.default.Schema({
     name: { type: String },
+    userid: { type: String, required: true },
     token: { type: String, required: true },
     status: { type: Number, default: 0 },
     type: { type: Number, default: 0 }

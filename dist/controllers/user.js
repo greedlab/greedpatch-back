@@ -10,7 +10,7 @@ var _bluebird = require('bluebird');
 /**
  * list users
  *
- * @example curl -H "Authorization: Bearer <token>" -X POST localhost:4002/user/list
+ * @example curl -H "Accept: application/vnd.greedlab+json" -H "Authorization: Bearer <token>" -X GET localhost:4002/users
  *
  * @param ctx
  * @param next
@@ -30,9 +30,7 @@ var list = exports.list = function () {
                     case 3:
                         users = _context.sent;
 
-                        if (!users) {
-                            ctx.throw(404);
-                        }
+                        users = users || [];
                         ctx.body = {
                             users: users
                         };
@@ -72,7 +70,7 @@ var list = exports.list = function () {
 /**
  * register
  *
- * @example curl -H "Content-Type: application/json" -X POST -d '{ "email": "greedpatch@greedlab.com", "password": "secretpasas" }' localhost:4002/register
+ * @example curl -H "Accept: application/vnd.greedlab+json" -H "Content-Type: application/json" -X POST -d '{"email": "test@greedlab.com","password":"secretpasas"}' localhost:4002/register
  * @param ctx
  * @param next
  * @returns {*}
@@ -99,21 +97,22 @@ var register = exports.register = function () {
                         return user.save();
 
                     case 7:
-                        _context2.next = 12;
+                        _context2.next = 13;
                         break;
 
                     case 9:
                         _context2.prev = 9;
                         _context2.t0 = _context2['catch'](4);
 
+                        debug(_context2.t0);
                         ctx.throw(422, 'email is existed');
 
-                    case 12:
-                        token = user.generateToken();
-                        _context2.next = 15;
-                        return token_util.saveToken(token);
+                    case 13:
+                        token = token_util.generateToken(user.id);
+                        _context2.next = 16;
+                        return token_tool.saveToken(token);
 
-                    case 15:
+                    case 16:
 
                         // response
                         response = user.toJSON();
@@ -125,13 +124,13 @@ var register = exports.register = function () {
                         };
 
                         if (!next) {
-                            _context2.next = 20;
+                            _context2.next = 21;
                             break;
                         }
 
                         return _context2.abrupt('return', next());
 
-                    case 20:
+                    case 21:
                     case 'end':
                         return _context2.stop();
                 }
@@ -147,7 +146,7 @@ var register = exports.register = function () {
 /**
  * login
  *
- * @example curl -H "Content-Type: application/json" -X POST -d '{ "email": "greedpatch@greedlab.com", "password": "secretpasas" }' localhost:4002/login
+ * @example curl -H "Content-Type: application/json" -X POST -d '{ "email": "test@greedlab.com", "password": "secretpasas" }' localhost:4002/login
  * @param ctx
  * @param next
  * @returns {*}
@@ -176,9 +175,9 @@ var login = exports.login = function () {
                                                 if (!user) {
                                                     ctx.throw('unvalid email or password', 401);
                                                 }
-                                                token = user.generateToken();
+                                                token = token_util.generateToken(user.id);
                                                 _context3.next = 4;
-                                                return token_util.saveToken(token);
+                                                return token_tool.saveToken(token);
 
                                             case 4:
                                                 response = user.toJSON();
@@ -259,7 +258,7 @@ var logout = exports.logout = function () {
 /**
  * modify my password
  *
- * @example curl -H "Authorization: Bearer <token>" -X POST -d '{"password": "password", "new_password": "new_password"}' localhost:4002/modify-my-password
+ * @example curl -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -X POST -d '{"password": "secretpasas", "new_password": "new_password"}' localhost:4002/modify-my-password
  * @param ctx
  * @param next
  */
@@ -267,60 +266,64 @@ var logout = exports.logout = function () {
 
 var modifyMyPassword = exports.modifyMyPassword = function () {
     var _ref6 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee6(ctx, next) {
-        var user, password, newPassword, equal, hashedNewPassword, token, response;
+        var user, password, new_password, equal, hashedNewPassword, token, response;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
                 switch (_context6.prev = _context6.next) {
                     case 0:
                         debug(ctx.request.body);
-                        user = auth.getUser(ctx);
+                        _context6.next = 3;
+                        return auth.getFullUser(ctx);
+
+                    case 3:
+                        user = _context6.sent;
 
                         if (!user) {
                             ctx.throw(401);
                         }
                         password = ctx.request.body.password;
-                        newPassword = ctx.request.body.new_password;
+                        new_password = ctx.request.body.new_password;
 
-                        if (!password || !newPassword) {
+                        if (!password || !new_password) {
                             ctx.throw(400);
                         }
-                        _context6.next = 8;
-                        return auth.compareHashString(password, user.password);
+                        _context6.next = 10;
+                        return encrypt.compareHashString(password, user.password);
 
-                    case 8:
+                    case 10:
                         equal = _context6.sent;
 
                         if (!equal) {
                             ctx.throw(401);
                         }
-                        _context6.next = 12;
-                        return auth.hashString(newPassword);
+                        _context6.next = 14;
+                        return encrypt.hashString(new_password);
 
-                    case 12:
+                    case 14:
                         hashedNewPassword = _context6.sent;
-                        _context6.prev = 13;
-                        _context6.next = 16;
+                        _context6.prev = 15;
+                        _context6.next = 18;
                         return user.update({ password: hashedNewPassword });
 
-                    case 16:
-                        _context6.next = 21;
+                    case 18:
+                        _context6.next = 23;
                         break;
 
-                    case 18:
-                        _context6.prev = 18;
-                        _context6.t0 = _context6['catch'](13);
+                    case 20:
+                        _context6.prev = 20;
+                        _context6.t0 = _context6['catch'](15);
 
                         ctx.throw(422, 'unvalid new_password');
 
-                    case 21:
+                    case 23:
                         // set origin token unvalid
                         (0, _unvalidToken.addToken)(auth.getToken(ctx));
 
-                        token = user.generateToken();
-                        _context6.next = 25;
-                        return token_util.saveToken(token);
+                        token = token_util.generateToken(user.id);
+                        _context6.next = 27;
+                        return token_tool.saveToken(token);
 
-                    case 25:
+                    case 27:
                         response = user.toJSON();
 
                         ctx.body = {
@@ -329,18 +332,18 @@ var modifyMyPassword = exports.modifyMyPassword = function () {
                         };
 
                         if (!next) {
-                            _context6.next = 29;
+                            _context6.next = 31;
                             break;
                         }
 
                         return _context6.abrupt('return', next());
 
-                    case 29:
+                    case 31:
                     case 'end':
                         return _context6.stop();
                 }
             }
-        }, _callee6, this, [[13, 18]]);
+        }, _callee6, this, [[15, 20]]);
     }));
 
     return function modifyMyPassword(_x10, _x11) {
@@ -351,7 +354,7 @@ var modifyMyPassword = exports.modifyMyPassword = function () {
 /**
  * get my profile
  *
- * @example curl -H "Authorization: Bearer <token>" -X GET localhost:4002/users/my/profile
+ * @example curl -H "Authorization: Bearer <token>" -X GET localhost:4002/users/me/profile
  * @param ctx
  * @param next
  */
@@ -365,7 +368,11 @@ var myProfile = exports.myProfile = function () {
                 switch (_context7.prev = _context7.next) {
                     case 0:
                         debug(ctx.request.body);
-                        user = auth.getUser(ctx);
+                        _context7.next = 3;
+                        return auth.getUser(ctx);
+
+                    case 3:
+                        user = _context7.sent;
 
                         if (!user) {
                             ctx.throw(401);
@@ -375,13 +382,13 @@ var myProfile = exports.myProfile = function () {
                         ctx.body = response;
 
                         if (!next) {
-                            _context7.next = 7;
+                            _context7.next = 9;
                             break;
                         }
 
                         return _context7.abrupt('return', next());
 
-                    case 7:
+                    case 9:
                     case 'end':
                         return _context7.stop();
                 }
@@ -395,9 +402,9 @@ var myProfile = exports.myProfile = function () {
 }();
 
 /**
- * reset my password
+ * send mail for reset password
  *
- * @example curl -X POST -d '{"email": "greedpatch@greedlab.com"}' localhost:4002/reset-my-password
+ * @example curl -X POST -d '{"email": "greedpatch@greedlab.com"}' localhost:4002/reset-password
  * @param ctx
  * @param next
  */
@@ -405,74 +412,83 @@ var myProfile = exports.myProfile = function () {
 
 var resetPassword = exports.resetPassword = function () {
     var _ref8 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee8(ctx, next) {
-        var user, password, hashedPassword, token, tokenObject, response;
+        var email, user, token, token_object;
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
                 switch (_context8.prev = _context8.next) {
                     case 0:
                         debug(ctx.request.body);
-                        user = auth.getUser(ctx);
+                        email = ctx.request.body.email;
 
-                        if (!user) {
-                            ctx.throw(401);
-                        }
-                        password = ctx.request.body.password;
-
-                        if (!password) {
+                        if (!email) {
                             ctx.throw(400);
                         }
+
+                        user = null;
+                        _context8.prev = 4;
                         _context8.next = 7;
-                        return auth.hashString(password);
+                        return _user2.default.findOne({ email: email });
 
                     case 7:
-                        hashedPassword = _context8.sent;
-                        _context8.prev = 8;
-                        _context8.next = 11;
-                        return user.update({ password: hashedPassword });
-
-                    case 11:
-                        _context8.next = 16;
+                        user = _context8.sent;
+                        _context8.next = 13;
                         break;
 
+                    case 10:
+                        _context8.prev = 10;
+                        _context8.t0 = _context8['catch'](4);
+
+                        ctx.throw(500);
+
                     case 13:
-                        _context8.prev = 13;
-                        _context8.t0 = _context8['catch'](8);
+                        if (!user) {
+                            ctx.throw(422, 'user is not existed');
+                        }
 
-                        ctx.throw(422, 'unvalid password');
-
-                    case 16:
-                        // set origin token unvalid
-                        (0, _unvalidToken.addToken)(auth.getToken(ctx));
-
-                        token = user.generateSetPasswordToken();
+                        token = token_util.generateSetPasswordToken(user.id);
 
                         // save token
 
-                        tokenObject = new _token2.default({ token: token, type: 2 });
-                        _context8.next = 21;
-                        return tokenObject.save();
+                        token_object = new _token3.default({ token: token, type: 2 });
+                        _context8.prev = 16;
+                        _context8.next = 19;
+                        return token_object.save();
+
+                    case 19:
+                        _context8.next = 24;
+                        break;
 
                     case 21:
-                        response = user.toJSON();
+                        _context8.prev = 21;
+                        _context8.t1 = _context8['catch'](16);
 
+                        ctx.throw(500);
+
+                    case 24:
+
+                        // TODO send mail
                         ctx.body = {
-                            token: token,
-                            user: response
+                            message: 'set password from email'
                         };
+                        // const response = user.toJSON();
+                        // ctx.body = {
+                        //     token,
+                        //     user: response
+                        // };
 
                         if (!next) {
-                            _context8.next = 25;
+                            _context8.next = 27;
                             break;
                         }
 
                         return _context8.abrupt('return', next());
 
-                    case 25:
+                    case 27:
                     case 'end':
                         return _context8.stop();
                 }
             }
-        }, _callee8, this, [[8, 13]]);
+        }, _callee8, this, [[4, 10], [16, 21]]);
     }));
 
     return function resetPassword(_x14, _x15) {
@@ -526,9 +542,9 @@ var setMyPassword = exports.setMyPassword = function () {
                             ctx.throw(422, 'user is not existed');
                         }
                         // TODO send <front >/set-password?token=<token> to email
-                        token = user.generateToken();
+                        token = token_util.generateToken(user.id);
                         _context9.next = 18;
-                        return token_util.saveToken(token);
+                        return token_tool.saveToken(token);
 
                     case 18:
 
@@ -557,7 +573,7 @@ var setMyPassword = exports.setMyPassword = function () {
 }();
 
 /**
- * udpate user's password
+ * update user's password
  *
  * @example curl -H "Authorization: Bearer <token>" -X POST -d '{password: "password"}' localhost:4002/users/:id/password
  * @param ctx
@@ -608,7 +624,7 @@ var updatePassword = exports.updatePassword = function () {
                         }
 
                         _context10.next = 19;
-                        return _token2.default.find({ userid: userid, status: 0 });
+                        return _token3.default.find({ userid: userid, status: 0 });
 
                     case 19:
                         docs = _context10.sent;
@@ -678,9 +694,9 @@ var updatePassword = exports.updatePassword = function () {
                         return _context10.finish(41);
 
                     case 49:
-                        token = user.generateToken();
+                        token = token_util.generateToken(user.id);
                         _context10.next = 52;
-                        return token_util.saveToken(token);
+                        return token_tool.saveToken(token);
 
                     case 52:
                         ctx.status = 204;
@@ -796,27 +812,35 @@ var _koaPassport = require('koa-passport');
 
 var _koaPassport2 = _interopRequireDefault(_koaPassport);
 
-var _user = require('../models/user');
+var _encrypt = require('../utils/encrypt');
 
-var _user2 = _interopRequireDefault(_user);
-
-var _token = require('../models/token');
-
-var _token2 = _interopRequireDefault(_token);
-
-var _unvalidToken = require('../tools/unvalid-token');
+var encrypt = _interopRequireWildcard(_encrypt);
 
 var _regex = require('../utils/regex');
 
 var regex = _interopRequireWildcard(_regex);
 
+var _token = require('../utils/token');
+
+var token_util = _interopRequireWildcard(_token);
+
+var _user = require('../models/user');
+
+var _user2 = _interopRequireDefault(_user);
+
+var _token2 = require('../models/token');
+
+var _token3 = _interopRequireDefault(_token2);
+
+var _unvalidToken = require('../tools/unvalid-token');
+
 var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
 
-var _token3 = require('../tools/token');
+var _token4 = require('../tools/token');
 
-var token_util = _interopRequireWildcard(_token3);
+var token_tool = _interopRequireWildcard(_token4);
 
 var _debug = require('debug');
 
@@ -830,7 +854,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// import UnvalidToken from '../models/unvalid-token';
 var debug = new _debug2.default(_package2.default.name); /**
                                                           * Created by Bell on 16/8/10.
                                                           */

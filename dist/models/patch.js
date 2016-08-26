@@ -15,11 +15,11 @@ _mongoose2.default.Promise = global.Promise; /**
                                               */
 
 var Patch = new _mongoose2.default.Schema({
-    patch_version: { type: String, required: true },
     project_id: { type: String, required: true },
     project_version: { type: String, required: true },
+    patch_version: { type: String, required: true },
     patch_url: { type: String, required: true },
-    hash: { type: String }
+    hash: { type: String, required: true }
 });
 
 exports.default = _mongoose2.default.model('patch', Patch);

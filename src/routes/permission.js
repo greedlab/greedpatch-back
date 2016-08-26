@@ -11,8 +11,8 @@ let base_url = '/permissions';
 let router = new Router({ prefix: base_url });
 
 router
-    .get('/:id', ensureUser, ensureManager, controller.get)
-    .put('/:id', ensureUser, ensureManager, controller.set);
+    .get('/:type', ensureUser, ensureManager, controller.get)
+    .put('/:type', ensureUser, ensureManager, controller.set);
 
 export default {
     baseUrl: base_url,

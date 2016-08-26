@@ -13,10 +13,11 @@ let router = new Router({ prefix: base_url });
 
 router
     .post('/', ensureUser, project.add)
-    .get('/:id', ensureUser, project.detail)
+    .post('/:id', ensureUser, project.update)
     .delete('/:id', ensureUser, project.del)
     .get('/', ensureUser, ensureManager, project.listAll)
     .get('/my', ensureUser, project.listMy)
+    .get('/:id', ensureUser, project.detail)
     .post('/:project/members', ensureUser, project.addMember)
     .get('/:project/members', ensureUser, project.listMembers)
     .delete('/:project/members/:member', ensureUser, project.delMember)

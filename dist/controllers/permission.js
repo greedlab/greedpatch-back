@@ -7,63 +7,71 @@ exports.set = exports.get = undefined;
 
 var _bluebird = require('bluebird');
 
+/**
+ * get permission by type
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
 var get = exports.get = function () {
     var _ref = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee(ctx, next) {
-        var id, permission, response;
+        var type, permission, response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
                 switch (_context.prev = _context.next) {
                     case 0:
-                        debug(ctx.request.body);
-                        id = ctx.params.id;
+                        type = ctx.params.type;
 
-                        if (!id) {
-                            ctx.throw(400, 'id can not be empty');
+                        if (!type) {
+                            ctx.throw(400, 'type can not be empty');
                         }
 
                         permission = null;
-                        _context.prev = 4;
-                        _context.next = 7;
-                        return _permission2.default.findById(id);
+                        _context.prev = 3;
+                        _context.next = 6;
+                        return _permission2.default.find({ type: type }, { _id: 0, __v: 0 }).limit(1);
 
-                    case 7:
+                    case 6:
                         permission = _context.sent;
-                        _context.next = 13;
+                        _context.next = 12;
                         break;
 
-                    case 10:
-                        _context.prev = 10;
-                        _context.t0 = _context['catch'](4);
+                    case 9:
+                        _context.prev = 9;
+                        _context.t0 = _context['catch'](3);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context.t0.message);
 
-                    case 13:
-                        if (!permission) {
-                            permission = new _permission2.default({
-                                id: id,
+                    case 12:
+                        response = null;
+
+                        if (permission && permission.length > 0) {
+                            response = permission[0].toJSON();
+                        } else {
+                            response = {
+                                type: type,
                                 permission: 0,
                                 domains: []
-                            });
+                            };
                         }
 
                         // response
-                        response = permission.toJSON();
-
                         ctx.body = response;
 
                         if (!next) {
-                            _context.next = 18;
+                            _context.next = 17;
                             break;
                         }
 
                         return _context.abrupt('return', next());
 
-                    case 18:
+                    case 17:
                     case 'end':
                         return _context.stop();
                 }
             }
-        }, _callee, this, [[4, 10]]);
+        }, _callee, this, [[3, 9]]);
     }));
 
     return function get(_x, _x2) {
@@ -71,83 +79,86 @@ var get = exports.get = function () {
     };
 }();
 
+/**
+ * set permission for type
+ * 
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
+
+
 var set = exports.set = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
-        var id, permission;
+        var type, permission_object, permissions, permission;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
                         debug(ctx.request.body);
-                        id = ctx.params.id;
+                        type = ctx.params.type;
 
-                        if (!id) {
-                            ctx.throw(400, 'id can not be empty');
+                        if (!type) {
+                            ctx.throw(400, 'type can not be empty');
                         }
 
-                        permission = null;
-                        _context2.prev = 4;
-                        _context2.next = 7;
-                        return _permission2.default.findById(id);
+                        permission_object = ctx.request.body;
 
-                    case 7:
-                        permission = _context2.sent;
-                        _context2.next = 13;
-                        break;
+                        permission_object.type = type;
 
-                    case 10:
-                        _context2.prev = 10;
-                        _context2.t0 = _context2['catch'](4);
+                        _context2.prev = 5;
+                        _context2.next = 8;
+                        return _permission2.default.find({ type: type }).limit(1);
 
-                        ctx.throw(500);
+                    case 8:
+                        permissions = _context2.sent;
+                        permission = permissions && permissions.length > 0 ? permissions[0] : null;
 
-                    case 13:
-                        if (permission) {
-                            _context2.next = 26;
+                        if (!permission) {
+                            _context2.next = 15;
                             break;
                         }
 
-                        permission = new _permission2.default(ctx.request.body);
-                        permission.id = id;
-                        _context2.prev = 16;
-                        _context2.next = 19;
+                        _context2.next = 13;
+                        return permission.update(permission_object);
+
+                    case 13:
+                        _context2.next = 18;
+                        break;
+
+                    case 15:
+                        permission = new _permission2.default(permission_object);
+                        _context2.next = 18;
                         return permission.save();
 
-                    case 19:
-                        _context2.next = 24;
+                    case 18:
+                        _context2.next = 23;
                         break;
 
-                    case 21:
-                        _context2.prev = 21;
-                        _context2.t1 = _context2['catch'](16);
+                    case 20:
+                        _context2.prev = 20;
+                        _context2.t0 = _context2['catch'](5);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context2.t0.message);
 
-                    case 24:
-                        _context2.next = 27;
-                        break;
-
-                    case 26:
-                        permission.update(ctx.request.body);
-
-                    case 27:
+                    case 23:
 
                         // response
                         ctx.status = 204;
 
                         if (!next) {
-                            _context2.next = 30;
+                            _context2.next = 26;
                             break;
                         }
 
                         return _context2.abrupt('return', next());
 
-                    case 30:
+                    case 26:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[4, 10], [16, 21]]);
+        }, _callee2, this, [[5, 20]]);
     }));
 
     return function set(_x3, _x4) {

@@ -36,7 +36,7 @@ Project.methods.isManager = function isManager(userid) {
         for (var _iterator = members[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
             var member = _step.value;
 
-            if (!result && member.id && member.id == userid && member.role == 0) {
+            if (!result && member.id && member.id === userid && member.role == 1) {
                 result = true;
             }
         }
@@ -73,7 +73,7 @@ Project.methods.isMember = function isMember(userid) {
         for (var _iterator2 = members[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
             var member = _step2.value;
 
-            if (!result && member.id && member.id == userid) {
+            if (!result && member.id === userid) {
                 result = true;
             }
         }
@@ -103,7 +103,7 @@ Project.methods.indexOf = function indexOf(userid) {
         return index;
     }
     for (var i = 0; i < members.length; i++) {
-        if (index != -1 && members[i].id == user.id) {
+        if (index == -1 && members[i].id === userid) {
             index = i;
         }
     }

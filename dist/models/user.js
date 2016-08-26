@@ -10,14 +10,6 @@ var _mongoose = require('mongoose');
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 
-var _jsonwebtoken = require('jsonwebtoken');
-
-var _jsonwebtoken2 = _interopRequireDefault(_jsonwebtoken);
-
-var _config = require('../config');
-
-var _config2 = _interopRequireDefault(_config);
-
 var _encrypt = require('../utils/encrypt');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -54,7 +46,7 @@ User.pre('save', function () {
                     case 3:
                         _context.prev = 3;
                         _context.next = 6;
-                        return (0, _encrypt.hashPassword)(user.password);
+                        return (0, _encrypt.hashString)(user.password);
 
                     case 6:
                         hash = _context.sent;
@@ -111,29 +103,6 @@ User.methods.validatePassword = function () {
 
     return validatePassword;
 }();
-
-User.methods.generateToken = function generateToken() {
-    var user = this;
-    var iat = Date.now() / 1000;
-    var exp = iat + 30 * 24 * 60 * 60;
-    var scope = 'default';
-    return _jsonwebtoken2.default.sign({ iat: iat, exp: exp, id: user.id, scope: scope }, _config2.default.token);
-};
-
-User.methods.generateCheckPatchToken = function generateCheckPatchToken() {
-    var user = this;
-    var iat = Date.now();
-    var scope = 'patch:check';
-    return _jsonwebtoken2.default.sign({ iat: iat, id: user.id, scope: scope }, _config2.default.token);
-};
-
-User.methods.generateSetPasswordToken = function generateSetPasswordToken() {
-    var user = this;
-    var iat = Date.now() / 1000;
-    var exp = iat + 24 * 60 * 60;
-    var scope = 'all';
-    return _jsonwebtoken2.default.sign({ iat: iat, exp: exp, id: user.id, scope: scope }, _config2.default.token);
-};
 
 exports.default = _mongoose2.default.model('user', User);
 //# sourceMappingURL=user.js.map

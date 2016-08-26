@@ -21,7 +21,7 @@ var Router = require('koa-router');
 var base_url = '/permissions';
 var router = new Router({ prefix: base_url });
 
-router.get('/:id', _auth.ensureUser, _auth.ensureManager, controller.get).put('/:id', _auth.ensureUser, _auth.ensureManager, controller.set);
+router.get('/:type', _auth.ensureUser, _auth.ensureManager, controller.get).put('/:type', _auth.ensureUser, _auth.ensureManager, controller.set);
 
 exports.default = {
     baseUrl: base_url,

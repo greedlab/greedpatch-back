@@ -9,7 +9,7 @@ import * as user from '../controllers/user';
 import * as auth from '../tools/auth';
 
 let base_url = '/';
-let router = new Router({ prefix: base_url });
+let router = new Router();
 
 router
     .get('/', home.index)

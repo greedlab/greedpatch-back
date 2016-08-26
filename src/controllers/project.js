@@ -11,6 +11,13 @@ import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
 
+/**
+ * add project
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
 export async function add(ctx, next) {
     debug(ctx.request.body);
     const bundle_id = ctx.request.body.bundle_id;
@@ -32,7 +39,7 @@ export async function add(ctx, next) {
         {
             id: user.id,
             email: user.email,
-            role: 0
+            role: 1
         }
     ];
     await project.save();
@@ -41,13 +48,16 @@ export async function add(ctx, next) {
     const response = project.toJSON();
     ctx.status = 201;
     ctx.body = response;
-    if (next) {
-        return next();
-    }
 }
 
+/**
+ * get project detail
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
 export async function detail(ctx, next) {
-    debug(ctx.request.body);
     const id = ctx.params.id;
     if (!id) {
         ctx.throw(400, 'id can not be empty');
@@ -57,7 +67,7 @@ export async function detail(ctx, next) {
     try {
         project = await Project.findById(id);
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
     if (!project) {
         ctx.throw(422, 'unvalid id');
@@ -77,13 +87,16 @@ export async function detail(ctx, next) {
     // response
     const response = project.toJSON();
     ctx.body = response;
-    if (next) {
-        return next();
-    }
 }
 
+/**
+ * delete project
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
 export async function del(ctx, next) {
-    debug(ctx.request.body);
     const id = ctx.params.id;
     if (!id) {
         ctx.throw(400, 'id can not be empty');
@@ -93,7 +106,7 @@ export async function del(ctx, next) {
     try {
         project = await Project.findById(id);
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
     if (!project) {
         ctx.throw(422, 'unvalid id');
@@ -113,16 +126,20 @@ export async function del(ctx, next) {
     try {
         await project.remove();
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
 
     // response
     ctx.status = 204;
-    if (next) {
-        return next();
-    }
 }
 
+/**
+ * update project
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
 export async function update(ctx, next) {
     debug(ctx.request.body);
     const id = ctx.params.id;
@@ -134,7 +151,7 @@ export async function update(ctx, next) {
     try {
         project = await Project.findById(id);
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
     if (!project) {
         ctx.throw(422, 'unvalid id');
@@ -163,19 +180,20 @@ export async function update(ctx, next) {
     try {
         await project.update(object);
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
 
     // response
     ctx.status = 204;
-    if (next) {
-        return next();
-    }
 }
 
+/**
+ * list all projects
+ *
+ * @param ctx
+ * @param next
+ */
 export async function listAll(ctx, next) {
-    debug(ctx.request.body);
-
     const user = await auth.getUser(ctx);
     if (!user) {
         ctx.throw(401);
@@ -187,24 +205,24 @@ export async function listAll(ctx, next) {
 
     let projects = null;
     try {
-        projects = await Project.find();
+        projects = await Project.find().lean();
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
-    projects = projects | [];
+    projects = projects || [];
 
     // response
-    const response = projects.toJSON();
-    ctx.body = response;
-    if (next) {
-        return next();
-    }
+    ctx.body = projects;
 }
 
+/**
+ * list my projects
+ *
+ * @param ctx
+ * @param next
+ */
 export async function listMy(ctx, next) {
-    debug(ctx.request.body);
-
-    const userid = auth.getID();
+    const userid = auth.getID(ctx);
 
     if (!userid) {
         ctx.throw(401);
@@ -212,20 +230,22 @@ export async function listMy(ctx, next) {
 
     let projects = null;
     try {
-        projects = await Project.find({'members.id': userid});
+        projects = await Project.find({'members.id': userid}).lean();
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
-    projects = projects | [];
+    projects = projects || [];
 
     // response
-    const response = projects.toJSON();
-    ctx.body = response;
-    if (next) {
-        return next();
-    }
+    ctx.body = projects;
 }
 
+/**
+ * add member to project
+ *
+ * @param ctx
+ * @param next
+ */
 export async function addMember(ctx, next) {
     debug(ctx.request.body);
     const project_id = ctx.params.project;
@@ -242,7 +262,7 @@ export async function addMember(ctx, next) {
     try {
         project = await Project.findById(project_id);
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
     if (!project) {
         ctx.throw(422, 'project is not existed');
@@ -260,9 +280,9 @@ export async function addMember(ctx, next) {
 
     let add_user = null;
     try {
-        add_user = await User.find({email});
+        add_user = await User.findOne({email});
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
     if (!add_user) {
         ctx.throw(422, 'user is not existed');
@@ -272,26 +292,28 @@ export async function addMember(ctx, next) {
         ctx.throw(422, 'user is in the project');
     }
 
-    let members = project.members | [];
+    let members = project.members || [];
     members.push({
         id: add_user.id,
         email: add_user.email,
         role: 0
     });
     try {
-        await project.update(members);
+        await project.update({$set: {members}});
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
     // response
     ctx.status = 204;
-    if (next) {
-        return next();
-    }
 }
 
+/**
+ * list all members in project
+ *
+ * @param ctx
+ * @param next
+ */
 export async function listMembers(ctx, next) {
-    debug(ctx.request.body);
     const project_id = ctx.params.project;
     if (!project_id) {
         ctx.throw(400, 'project can not be empty');
@@ -301,7 +323,7 @@ export async function listMembers(ctx, next) {
     try {
         project = await Project.findById(project_id);
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
     if (!project) {
         ctx.throw(422, 'project is not existed');
@@ -317,22 +339,19 @@ export async function listMembers(ctx, next) {
         }
     }
 
-    let members = project.members | [];
-    try {
-        await project.update(members);
-    } catch (err) {
-        ctx.throw(500);
-    }
     // response
-    const response = project.members.toJSON();
+    const response = project.members || [];
     ctx.body = {
         members: response
     };
-    if (next) {
-        return next();
-    }
 }
 
+/**
+ * delete member in project
+ *
+ * @param ctx
+ * @param next
+ */
 export async function delMember(ctx, next) {
     debug(ctx.request.body);
     const project_id = ctx.params.project;
@@ -349,7 +368,7 @@ export async function delMember(ctx, next) {
     try {
         project = await Project.findById(project_id);
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
     if (!project) {
         ctx.throw(422, 'project is not existed');
@@ -365,20 +384,23 @@ export async function delMember(ctx, next) {
         }
     }
 
+    if (project.isManager(member_id)) {
+        ctx.throw(403, 'can not delete manager');
+    }
+
     const index = project.indexOf(member_id);
     if (index == -1) {
         ctx.throw(422, 'member is not in the project');
     }
 
-    const members = project.members.splice(index, 1);
+    let members = project.members;
+    members.splice(index, 1);
+
     try {
-        await project.update(members);
+        await project.update({$set: {members}});
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
 
     ctx.status = 204;
-    if (next) {
-        return next();
-    }
 }

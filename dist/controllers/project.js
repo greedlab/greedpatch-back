@@ -7,6 +7,13 @@ exports.delMember = exports.listMembers = exports.addMember = exports.listMy = e
 
 var _bluebird = require('bluebird');
 
+/**
+ * add project
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
 var add = exports.add = function () {
     var _ref = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee(ctx, next) {
         var bundle_id, name, user, project, response;
@@ -41,7 +48,7 @@ var add = exports.add = function () {
                         project.members = [{
                             id: user.id,
                             email: user.email,
-                            role: 0
+                            role: 1
                         }];
                         _context.next = 13;
                         return project.save();
@@ -54,14 +61,7 @@ var add = exports.add = function () {
                         ctx.status = 201;
                         ctx.body = response;
 
-                        if (!next) {
-                            _context.next = 18;
-                            break;
-                        }
-
-                        return _context.abrupt('return', next());
-
-                    case 18:
+                    case 16:
                     case 'end':
                         return _context.stop();
                 }
@@ -74,6 +74,15 @@ var add = exports.add = function () {
     };
 }();
 
+/**
+ * get project detail
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
+
+
 var detail = exports.detail = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
         var id, project, user, response;
@@ -81,7 +90,6 @@ var detail = exports.detail = function () {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
-                        debug(ctx.request.body);
                         id = ctx.params.id;
 
                         if (!id) {
@@ -89,30 +97,30 @@ var detail = exports.detail = function () {
                         }
 
                         project = null;
-                        _context2.prev = 4;
-                        _context2.next = 7;
+                        _context2.prev = 3;
+                        _context2.next = 6;
                         return _project2.default.findById(id);
 
-                    case 7:
+                    case 6:
                         project = _context2.sent;
-                        _context2.next = 13;
+                        _context2.next = 12;
                         break;
 
-                    case 10:
-                        _context2.prev = 10;
-                        _context2.t0 = _context2['catch'](4);
+                    case 9:
+                        _context2.prev = 9;
+                        _context2.t0 = _context2['catch'](3);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context2.t0.message);
 
-                    case 13:
+                    case 12:
                         if (!project) {
                             ctx.throw(422, 'unvalid id');
                         }
 
-                        _context2.next = 16;
+                        _context2.next = 15;
                         return auth.getUser(ctx);
 
-                    case 16:
+                    case 15:
                         user = _context2.sent;
 
                         if (!user) {
@@ -131,25 +139,27 @@ var detail = exports.detail = function () {
 
                         ctx.body = response;
 
-                        if (!next) {
-                            _context2.next = 23;
-                            break;
-                        }
-
-                        return _context2.abrupt('return', next());
-
-                    case 23:
+                    case 20:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[4, 10]]);
+        }, _callee2, this, [[3, 9]]);
     }));
 
     return function detail(_x3, _x4) {
         return _ref2.apply(this, arguments);
     };
 }();
+
+/**
+ * delete project
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
+
 
 var del = exports.del = function () {
     var _ref3 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee3(ctx, next) {
@@ -158,7 +168,6 @@ var del = exports.del = function () {
             while (1) {
                 switch (_context3.prev = _context3.next) {
                     case 0:
-                        debug(ctx.request.body);
                         id = ctx.params.id;
 
                         if (!id) {
@@ -166,30 +175,30 @@ var del = exports.del = function () {
                         }
 
                         project = null;
-                        _context3.prev = 4;
-                        _context3.next = 7;
+                        _context3.prev = 3;
+                        _context3.next = 6;
                         return _project2.default.findById(id);
 
-                    case 7:
+                    case 6:
                         project = _context3.sent;
-                        _context3.next = 13;
+                        _context3.next = 12;
                         break;
 
-                    case 10:
-                        _context3.prev = 10;
-                        _context3.t0 = _context3['catch'](4);
+                    case 9:
+                        _context3.prev = 9;
+                        _context3.t0 = _context3['catch'](3);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context3.t0.message);
 
-                    case 13:
+                    case 12:
                         if (!project) {
                             ctx.throw(422, 'unvalid id');
                         }
 
-                        _context3.next = 16;
+                        _context3.next = 15;
                         return auth.getUser(ctx);
 
-                    case 16:
+                    case 15:
                         user = _context3.sent;
 
                         if (!user) {
@@ -203,44 +212,46 @@ var del = exports.del = function () {
                             }
                         }
 
-                        _context3.prev = 19;
-                        _context3.next = 22;
+                        _context3.prev = 18;
+                        _context3.next = 21;
                         return project.remove();
 
-                    case 22:
-                        _context3.next = 27;
+                    case 21:
+                        _context3.next = 26;
                         break;
 
-                    case 24:
-                        _context3.prev = 24;
-                        _context3.t1 = _context3['catch'](19);
+                    case 23:
+                        _context3.prev = 23;
+                        _context3.t1 = _context3['catch'](18);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context3.t1.message);
 
-                    case 27:
+                    case 26:
 
                         // response
                         ctx.status = 204;
 
-                        if (!next) {
-                            _context3.next = 30;
-                            break;
-                        }
-
-                        return _context3.abrupt('return', next());
-
-                    case 30:
+                    case 27:
                     case 'end':
                         return _context3.stop();
                 }
             }
-        }, _callee3, this, [[4, 10], [19, 24]]);
+        }, _callee3, this, [[3, 9], [18, 23]]);
     }));
 
     return function del(_x5, _x6) {
         return _ref3.apply(this, arguments);
     };
 }();
+
+/**
+ * update project
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
+
 
 var update = exports.update = function () {
     var _ref4 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee4(ctx, next) {
@@ -270,7 +281,7 @@ var update = exports.update = function () {
                         _context4.prev = 10;
                         _context4.t0 = _context4['catch'](4);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context4.t0.message);
 
                     case 13:
                         if (!project) {
@@ -316,21 +327,14 @@ var update = exports.update = function () {
                         _context4.prev = 29;
                         _context4.t1 = _context4['catch'](24);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context4.t1.message);
 
                     case 32:
 
                         // response
                         ctx.status = 204;
 
-                        if (!next) {
-                            _context4.next = 35;
-                            break;
-                        }
-
-                        return _context4.abrupt('return', next());
-
-                    case 35:
+                    case 33:
                     case 'end':
                         return _context4.stop();
                 }
@@ -343,19 +347,25 @@ var update = exports.update = function () {
     };
 }();
 
+/**
+ * list all projects
+ *
+ * @param ctx
+ * @param next
+ */
+
+
 var listAll = exports.listAll = function () {
     var _ref5 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee5(ctx, next) {
-        var user, projects, response;
+        var user, projects;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
                 switch (_context5.prev = _context5.next) {
                     case 0:
-                        debug(ctx.request.body);
-
-                        _context5.next = 3;
+                        _context5.next = 2;
                         return auth.getUser(ctx);
 
-                    case 3:
+                    case 2:
                         user = _context5.sent;
 
                         if (!user) {
@@ -367,42 +377,33 @@ var listAll = exports.listAll = function () {
                         }
 
                         projects = null;
-                        _context5.prev = 7;
-                        _context5.next = 10;
-                        return _project2.default.find();
+                        _context5.prev = 6;
+                        _context5.next = 9;
+                        return _project2.default.find().lean();
 
-                    case 10:
+                    case 9:
                         projects = _context5.sent;
-                        _context5.next = 16;
+                        _context5.next = 15;
                         break;
 
-                    case 13:
-                        _context5.prev = 13;
-                        _context5.t0 = _context5['catch'](7);
+                    case 12:
+                        _context5.prev = 12;
+                        _context5.t0 = _context5['catch'](6);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context5.t0.message);
 
-                    case 16:
-                        projects = projects | [];
+                    case 15:
+                        projects = projects || [];
 
                         // response
-                        response = projects.toJSON();
+                        ctx.body = projects;
 
-                        ctx.body = response;
-
-                        if (!next) {
-                            _context5.next = 21;
-                            break;
-                        }
-
-                        return _context5.abrupt('return', next());
-
-                    case 21:
+                    case 17:
                     case 'end':
                         return _context5.stop();
                 }
             }
-        }, _callee5, this, [[7, 13]]);
+        }, _callee5, this, [[6, 12]]);
     }));
 
     return function listAll(_x9, _x10) {
@@ -410,16 +411,22 @@ var listAll = exports.listAll = function () {
     };
 }();
 
+/**
+ * list my projects
+ *
+ * @param ctx
+ * @param next
+ */
+
+
 var listMy = exports.listMy = function () {
     var _ref6 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee6(ctx, next) {
-        var userid, projects, response;
+        var userid, projects;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
                 switch (_context6.prev = _context6.next) {
                     case 0:
-                        debug(ctx.request.body);
-
-                        userid = auth.getID();
+                        userid = auth.getID(ctx);
 
 
                         if (!userid) {
@@ -427,48 +434,47 @@ var listMy = exports.listMy = function () {
                         }
 
                         projects = null;
-                        _context6.prev = 4;
-                        _context6.next = 7;
-                        return _project2.default.find({ 'members.id': userid });
+                        _context6.prev = 3;
+                        _context6.next = 6;
+                        return _project2.default.find({ 'members.id': userid }).lean();
 
-                    case 7:
+                    case 6:
                         projects = _context6.sent;
-                        _context6.next = 13;
+                        _context6.next = 12;
                         break;
 
-                    case 10:
-                        _context6.prev = 10;
-                        _context6.t0 = _context6['catch'](4);
+                    case 9:
+                        _context6.prev = 9;
+                        _context6.t0 = _context6['catch'](3);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context6.t0.message);
 
-                    case 13:
-                        projects = projects | [];
+                    case 12:
+                        projects = projects || [];
 
                         // response
-                        response = projects.toJSON();
+                        ctx.body = projects;
 
-                        ctx.body = response;
-
-                        if (!next) {
-                            _context6.next = 18;
-                            break;
-                        }
-
-                        return _context6.abrupt('return', next());
-
-                    case 18:
+                    case 14:
                     case 'end':
                         return _context6.stop();
                 }
             }
-        }, _callee6, this, [[4, 10]]);
+        }, _callee6, this, [[3, 9]]);
     }));
 
     return function listMy(_x11, _x12) {
         return _ref6.apply(this, arguments);
     };
 }();
+
+/**
+ * add member to project
+ *
+ * @param ctx
+ * @param next
+ */
+
 
 var addMember = exports.addMember = function () {
     var _ref7 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee7(ctx, next) {
@@ -504,7 +510,7 @@ var addMember = exports.addMember = function () {
                         _context7.prev = 12;
                         _context7.t0 = _context7['catch'](6);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context7.t0.message);
 
                     case 15:
                         if (!project) {
@@ -529,7 +535,7 @@ var addMember = exports.addMember = function () {
                         add_user = null;
                         _context7.prev = 22;
                         _context7.next = 25;
-                        return _user2.default.find({ email: email });
+                        return _user2.default.findOne({ email: email });
 
                     case 25:
                         add_user = _context7.sent;
@@ -540,7 +546,7 @@ var addMember = exports.addMember = function () {
                         _context7.prev = 28;
                         _context7.t1 = _context7['catch'](22);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context7.t1.message);
 
                     case 31:
                         if (!add_user) {
@@ -551,7 +557,7 @@ var addMember = exports.addMember = function () {
                             ctx.throw(422, 'user is in the project');
                         }
 
-                        members = project.members | [];
+                        members = project.members || [];
 
                         members.push({
                             id: add_user.id,
@@ -560,7 +566,7 @@ var addMember = exports.addMember = function () {
                         });
                         _context7.prev = 35;
                         _context7.next = 38;
-                        return project.update(members);
+                        return project.update({ $set: { members: members } });
 
                     case 38:
                         _context7.next = 43;
@@ -570,20 +576,13 @@ var addMember = exports.addMember = function () {
                         _context7.prev = 40;
                         _context7.t2 = _context7['catch'](35);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context7.t2.message);
 
                     case 43:
                         // response
                         ctx.status = 204;
 
-                        if (!next) {
-                            _context7.next = 46;
-                            break;
-                        }
-
-                        return _context7.abrupt('return', next());
-
-                    case 46:
+                    case 44:
                     case 'end':
                         return _context7.stop();
                 }
@@ -596,14 +595,21 @@ var addMember = exports.addMember = function () {
     };
 }();
 
+/**
+ * list all members in project
+ *
+ * @param ctx
+ * @param next
+ */
+
+
 var listMembers = exports.listMembers = function () {
     var _ref8 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee8(ctx, next) {
-        var project_id, project, user, members, response;
+        var project_id, project, user, response;
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
                 switch (_context8.prev = _context8.next) {
                     case 0:
-                        debug(ctx.request.body);
                         project_id = ctx.params.project;
 
                         if (!project_id) {
@@ -611,30 +617,30 @@ var listMembers = exports.listMembers = function () {
                         }
 
                         project = null;
-                        _context8.prev = 4;
-                        _context8.next = 7;
+                        _context8.prev = 3;
+                        _context8.next = 6;
                         return _project2.default.findById(project_id);
 
-                    case 7:
+                    case 6:
                         project = _context8.sent;
-                        _context8.next = 13;
+                        _context8.next = 12;
                         break;
 
-                    case 10:
-                        _context8.prev = 10;
-                        _context8.t0 = _context8['catch'](4);
+                    case 9:
+                        _context8.prev = 9;
+                        _context8.t0 = _context8['catch'](3);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context8.t0.message);
 
-                    case 13:
+                    case 12:
                         if (!project) {
                             ctx.throw(422, 'project is not existed');
                         }
 
-                        _context8.next = 16;
+                        _context8.next = 15;
                         return auth.getUser(ctx);
 
-                    case 16:
+                    case 15:
                         user = _context8.sent;
 
                         if (!user) {
@@ -646,48 +652,33 @@ var listMembers = exports.listMembers = function () {
                             }
                         }
 
-                        members = project.members | [];
-                        _context8.prev = 20;
-                        _context8.next = 23;
-                        return project.update(members);
-
-                    case 23:
-                        _context8.next = 28;
-                        break;
-
-                    case 25:
-                        _context8.prev = 25;
-                        _context8.t1 = _context8['catch'](20);
-
-                        ctx.throw(500);
-
-                    case 28:
                         // response
-                        response = project.members.toJSON();
+                        response = project.members || [];
 
                         ctx.body = {
                             members: response
                         };
 
-                        if (!next) {
-                            _context8.next = 32;
-                            break;
-                        }
-
-                        return _context8.abrupt('return', next());
-
-                    case 32:
+                    case 20:
                     case 'end':
                         return _context8.stop();
                 }
             }
-        }, _callee8, this, [[4, 10], [20, 25]]);
+        }, _callee8, this, [[3, 9]]);
     }));
 
     return function listMembers(_x15, _x16) {
         return _ref8.apply(this, arguments);
     };
 }();
+
+/**
+ * delete member in project
+ *
+ * @param ctx
+ * @param next
+ */
+
 
 var delMember = exports.delMember = function () {
     var _ref9 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee9(ctx, next) {
@@ -723,7 +714,7 @@ var delMember = exports.delMember = function () {
                         _context9.prev = 12;
                         _context9.t0 = _context9['catch'](6);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context9.t0.message);
 
                     case 15:
                         if (!project) {
@@ -745,44 +736,44 @@ var delMember = exports.delMember = function () {
                             }
                         }
 
+                        if (project.isManager(member_id)) {
+                            ctx.throw(403, 'can not delete manager');
+                        }
+
                         index = project.indexOf(member_id);
 
                         if (index == -1) {
                             ctx.throw(422, 'member is not in the project');
                         }
 
-                        members = project.members.splice(index, 1);
-                        _context9.prev = 24;
-                        _context9.next = 27;
-                        return project.update(members);
+                        members = project.members;
 
-                    case 27:
-                        _context9.next = 32;
-                        break;
+                        members.splice(index, 1);
+
+                        _context9.prev = 26;
+                        _context9.next = 29;
+                        return project.update({ $set: { members: members } });
 
                     case 29:
-                        _context9.prev = 29;
-                        _context9.t1 = _context9['catch'](24);
+                        _context9.next = 34;
+                        break;
 
-                        ctx.throw(500);
+                    case 31:
+                        _context9.prev = 31;
+                        _context9.t1 = _context9['catch'](26);
 
-                    case 32:
+                        ctx.throw(500, _context9.t1.message);
+
+                    case 34:
 
                         ctx.status = 204;
-
-                        if (!next) {
-                            _context9.next = 35;
-                            break;
-                        }
-
-                        return _context9.abrupt('return', next());
 
                     case 35:
                     case 'end':
                         return _context9.stop();
                 }
             }
-        }, _callee9, this, [[6, 12], [24, 29]]);
+        }, _callee9, this, [[6, 12], [26, 31]]);
     }));
 
     return function delMember(_x17, _x18) {

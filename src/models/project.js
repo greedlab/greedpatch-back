@@ -20,7 +20,7 @@ Project.methods.isManager = function isManager(userid) {
         return result;
     }
     for (let member of members) {
-        if (!result && member.id && member.id == userid && member.role == 0) {
+        if (!result && member.id && member.id === userid && member.role == 1) {
             result = true;
         }
     }
@@ -35,7 +35,7 @@ Project.methods.isMember = function isMember(userid) {
         return result;
     }
     for (let member of members) {
-        if (!result && member.id && member.id == userid) {
+        if (!result && member.id === userid) {
             result = true;
         }
     }
@@ -50,7 +50,7 @@ Project.methods.indexOf = function indexOf(userid) {
         return index;
     }
     for (let i = 0; i < members.length; i++) {
-        if (index !=-1 && members[i].id == user.id) {
+        if (index == -1 && members[i].id === userid) {
             index = i;
         }
     }

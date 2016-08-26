@@ -32,7 +32,7 @@ export async function ensureUser(ctx, next) {
         ctx.throw(401);
     }
 
-    if (payload.exp && payload.exp < Date.now() / 1000) {
+    if (payload.exp && payload.exp < Date.now()) {
         ctx.throw(401);
     }
 
@@ -144,7 +144,20 @@ export function getID(ctx) {
 }
 
 /**
- * get User from ctx.request header
+ * get User with password from ctx.request header
+ * @param ctx
+ * @returns {*}
+ */
+export async function getFullUser(ctx) {
+    const id = getID(ctx);
+    if (id) {
+        return await User.findById(id);
+    }
+    return null;
+}
+
+/**
+ * get User with out password from ctx.request header
  * @param ctx
  * @returns {*}
  */

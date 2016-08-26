@@ -7,58 +7,71 @@ import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
 
+/**
+ * get permission by type
+ *
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
 export async function get(ctx, next) {
-    debug(ctx.request.body);
-    const id = ctx.params.id;
-    if (!id) {
-        ctx.throw(400, 'id can not be empty');
+    const type = ctx.params.type;
+    if (!type) {
+        ctx.throw(400, 'type can not be empty');
     }
 
     let permission = null;
     try {
-        permission = await Permission.findById(id);
+        permission = await Permission.find({type},{_id:0, __v:0}).limit(1);
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500,err.message);
     }
-    if (!permission) {
-        permission = new Permission({
-            id,
+    let response = null;
+    if (permission && permission.length > 0) {
+        response = permission[0].toJSON();
+    } else {
+        response = {
+            type,
             permission: 0,
             domains: []
-        });
+        };
     }
 
     // response
-    const response = permission.toJSON();
     ctx.body = response;
     if (next) {
         return next();
     }
 }
 
+/**
+ * set permission for type
+ * 
+ * @param ctx
+ * @param next
+ * @returns {*}
+ */
 export async function set(ctx, next) {
     debug(ctx.request.body);
-    const id = ctx.params.id;
-    if (!id) {
-        ctx.throw(400, 'id can not be empty');
+    const type = ctx.params.type;
+    if (!type) {
+        ctx.throw(400, 'type can not be empty');
     }
 
-    let permission = null;
+    let permission_object = ctx.request.body;
+    permission_object.type = type;
+
     try {
-        permission = await Permission.findById(id);
-    } catch (err) {
-        ctx.throw(500);
-    }
-    if (!permission) {
-        permission = new Permission(ctx.request.body);
-        permission.id = id;
-        try {
+        const permissions = await Permission.find({type}).limit(1);
+        let permission = (permissions && permissions.length > 0) ? permissions[0] : null;
+        if (permission) {
+            await permission.update(permission_object);
+        } else {
+            permission = new Permission(permission_object);
             await permission.save();
-        } catch (err) {
-            ctx.throw(500);
         }
-    } else {
-        permission.update(ctx.request.body);
+    } catch (err) {
+        ctx.throw(500,err.message);
     }
 
     // response

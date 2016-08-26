@@ -3,13 +3,14 @@
  */
 
 import passport from 'koa-passport';
+import * as encrypt from '../utils/encrypt';
+import * as regex from '../utils/regex';
+import * as token_util from '../utils/token';
 import User from '../models/user';
 import Token from '../models/token';
-// import UnvalidToken from '../models/unvalid-token';
-import {addToken as addUnvalidToken} from '../tools/unvalid-token';
-import * as regex from '../utils/regex';
+import { addToken as addUnvalidToken } from '../tools/unvalid-token';
 import * as auth from '../tools/auth';
-import * as token_util from '../tools/token';
+import * as token_tool from '../tools/token';
 import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
@@ -17,7 +18,7 @@ const debug = new Debug(pkg.name);
 /**
  * list users
  *
- * @example curl -H "Authorization: Bearer <token>" -X POST localhost:4002/user/list
+ * @example curl -H "Accept: application/vnd.greedlab+json" -H "Authorization: Bearer <token>" -X GET localhost:4002/users
  *
  * @param ctx
  * @param next
@@ -25,10 +26,8 @@ const debug = new Debug(pkg.name);
  */
 export async function list(ctx, next) {
     try {
-        const users = await User.find({},{password: 0, __v: 0});
-        if (!users) {
-            ctx.throw(404);
-        }
+        let users = await User.find({},{password: 0, __v: 0});
+        users = users || [];
         ctx.body = {
             users
         };
@@ -38,7 +37,6 @@ export async function list(ctx, next) {
         }
         ctx.throw(500);
     }
-
     if (next) {
         return next();
     }
@@ -47,7 +45,7 @@ export async function list(ctx, next) {
 /**
  * register
  *
- * @example curl -H "Content-Type: application/json" -X POST -d '{ "email": "greedpatch@greedlab.com", "password": "secretpasas" }' localhost:4002/register
+ * @example curl -H "Accept: application/vnd.greedlab+json" -H "Content-Type: application/json" -X POST -d '{"email": "test@greedlab.com","password":"secretpasas"}' localhost:4002/register
  * @param ctx
  * @param next
  * @returns {*}
@@ -64,10 +62,11 @@ export async function register(ctx, next) {
     try {
         await user.save();
     } catch (err) {
+        debug(err);
         ctx.throw(422, 'email is existed');
     }
-    const token = user.generateToken();
-    await token_util.saveToken(token);
+    const token = token_util.generateToken(user.id);
+    await token_tool.saveToken(token);
 
     // response
     const response = user.toJSON();
@@ -84,7 +83,7 @@ export async function register(ctx, next) {
 /**
  * login
  *
- * @example curl -H "Content-Type: application/json" -X POST -d '{ "email": "greedpatch@greedlab.com", "password": "secretpasas" }' localhost:4002/login
+ * @example curl -H "Content-Type: application/json" -X POST -d '{ "email": "test@greedlab.com", "password": "secretpasas" }' localhost:4002/login
  * @param ctx
  * @param next
  * @returns {*}
@@ -97,8 +96,8 @@ export async function login(ctx, next) {
         if (!user) {
             ctx.throw('unvalid email or password', 401);
         }
-        const token = user.generateToken();
-        await token_util.saveToken(token);
+        const token = token_util.generateToken(user.id);
+        await token_tool.saveToken(token);
 
         const response = user.toJSON();
         delete response.password;
@@ -132,26 +131,26 @@ export async function logout(ctx, next) {
 /**
  * modify my password
  *
- * @example curl -H "Authorization: Bearer <token>" -X POST -d '{"password": "password", "new_password": "new_password"}' localhost:4002/modify-my-password
+ * @example curl -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -X POST -d '{"password": "secretpasas", "new_password": "new_password"}' localhost:4002/modify-my-password
  * @param ctx
  * @param next
  */
 export async function modifyMyPassword(ctx, next) {
     debug(ctx.request.body);
-    const user = auth.getUser(ctx);
+    const user = await auth.getFullUser(ctx);
     if (!user) {
         ctx.throw(401);
     }
     const password = ctx.request.body.password;
-    const newPassword = ctx.request.body.new_password;
-    if (!password || !newPassword) {
+    const new_password = ctx.request.body.new_password;
+    if (!password || !new_password) {
         ctx.throw(400);
     }
-    const equal = await auth.compareHashString(password, user.password);
+    const equal = await encrypt.compareHashString(password, user.password);
     if (!equal) {
         ctx.throw(401);
     }
-    const hashedNewPassword = await auth.hashString(newPassword);
+    const hashedNewPassword = await encrypt.hashString(new_password);
     try {
         await user.update({password: hashedNewPassword});
     } catch (err) {
@@ -160,8 +159,8 @@ export async function modifyMyPassword(ctx, next) {
     // set origin token unvalid
     addUnvalidToken(auth.getToken(ctx));
 
-    const token = user.generateToken();
-    await token_util.saveToken(token);
+    const token = token_util.generateToken(user.id);
+    await token_tool.saveToken(token);
 
     const response = user.toJSON();
     ctx.body = {
@@ -176,13 +175,13 @@ export async function modifyMyPassword(ctx, next) {
 /**
  * get my profile
  *
- * @example curl -H "Authorization: Bearer <token>" -X GET localhost:4002/users/my/profile
+ * @example curl -H "Authorization: Bearer <token>" -X GET localhost:4002/users/me/profile
  * @param ctx
  * @param next
  */
 export async function myProfile(ctx, next) {
     debug(ctx.request.body);
-    const user = auth.getUser(ctx);
+    const user = await auth.getUser(ctx);
     if (!user) {
         ctx.throw(401);
     }
@@ -194,42 +193,48 @@ export async function myProfile(ctx, next) {
 }
 
 /**
- * reset my password
+ * send mail for reset password
  *
- * @example curl -X POST -d '{"email": "greedpatch@greedlab.com"}' localhost:4002/reset-my-password
+ * @example curl -X POST -d '{"email": "greedpatch@greedlab.com"}' localhost:4002/reset-password
  * @param ctx
  * @param next
  */
 export async function resetPassword(ctx, next) {
     debug(ctx.request.body);
-    const user = auth.getUser(ctx);
-    if (!user) {
-        ctx.throw(401);
-    }
-    const password = ctx.request.body.password;
-    if (!password) {
+    const email = ctx.request.body.email;
+    if (!email) {
         ctx.throw(400);
     }
-    const hashedPassword = await auth.hashString(password);
-    try {
-        await user.update({password: hashedPassword});
-    } catch (err) {
-        ctx.throw(422, 'unvalid password');
-    }
-    // set origin token unvalid
-    addUnvalidToken(auth.getToken(ctx));
 
-    const token = user.generateSetPasswordToken();
+    let user = null;
+    try {
+        user = await User.findOne({email});
+    } catch (err) {
+        ctx.throw(500);
+    }
+    if (!user) {
+        ctx.throw(422,'user is not existed');
+    }
+
+    const token = token_util.generateSetPasswordToken(user.id);
 
     // save token
-    const tokenObject = new Token({token, type: 2});
-    await tokenObject.save();
+    const token_object = new Token({token, type: 2});
+    try {
+        await token_object.save();
+    } catch (err) {
+        ctx.throw(500);
+    }
 
-    const response = user.toJSON();
+    // TODO send mail
     ctx.body = {
-        token,
-        user: response
+        message: 'set password from email'
     };
+    // const response = user.toJSON();
+    // ctx.body = {
+    //     token,
+    //     user: response
+    // };
     if (next) {
         return next();
     }
@@ -261,8 +266,8 @@ export async function setMyPassword(ctx, next) {
         ctx.throw(422, 'user is not existed');
     }
     // TODO send <front >/set-password?token=<token> to email
-    const token = user.generateToken();
-    await token_util.saveToken(token);
+    const token = token_util.generateToken(user.id);
+    await token_tool.saveToken(token);
 
     ctx.body = {
         message : 'please set password through your email'
@@ -273,7 +278,7 @@ export async function setMyPassword(ctx, next) {
 }
 
 /**
- * udpate user's password
+ * update user's password
  *
  * @example curl -H "Authorization: Bearer <token>" -X POST -d '{password: "password"}' localhost:4002/users/:id/password
  * @param ctx
@@ -309,8 +314,8 @@ export async function updatePassword(ctx, next) {
             await doc.update({status: 1});
         }
     }
-    const token = user.generateToken();
-    await token_util.saveToken(token);
+    const token = token_util.generateToken(user.id);
+    await token_tool.saveToken(token);
     ctx.status = 204;
     if (next) {
         return next();

@@ -1,7 +1,7 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+    value: true
 });
 
 var _mongoose = require('mongoose');
@@ -15,8 +15,9 @@ _mongoose2.default.Promise = global.Promise; /**
                                               */
 
 var Permission = new _mongoose2.default.Schema({
-  permission: { type: String, default: 0 },
-  domains: { type: Array }
+    type: { type: Number, default: 0, unique: true },
+    permission: { type: String, default: 0 },
+    domains: { type: Array }
 });
 
 exports.default = _mongoose2.default.model('permission', Permission);

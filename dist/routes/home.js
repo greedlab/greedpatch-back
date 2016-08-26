@@ -25,7 +25,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 var Router = require('koa-router');
 
 var base_url = '/';
-var router = new Router({ prefix: base_url });
+var router = new Router();
 
 router.get('/', home.index).post('/register', user.register).post('/login', user.login).post('/logout', auth.ensureUser, user.logout).post('/modify-my-password', auth.ensureUser, user.modifyMyPassword).post('/reset-password', user.resetPassword).post('/set-my-password', auth.ensureUser, auth.ensureSetPasswordToken, user.setMyPassword);
 

@@ -2,9 +2,9 @@
  * Created by Bell on 16/8/24.
  */
 
+import * as token_util from '../utils/token';
 import Token from '../models/token';
 import * as auth from '../tools/auth';
-import * as encrypt from '../utils/encrypt';
 import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
@@ -12,7 +12,6 @@ const debug = new Debug(pkg.name);
 /**
  * generate new token
  *
- * @example curl -H "Content-Type: application/json" -X POST -d '{ "name": "test generate token" }' localhost:4002/tokens
  * @param ctx
  * @param next
  * @returns {*}
@@ -25,52 +24,49 @@ export async function generate(ctx, next) {
         ctx.throw(400, 'name can not be empty');
     }
 
-    const user = new auth.getUser(ctx);
-    if (!user) {
+    const userid = auth.getID(ctx);
+    if (!userid) {
         ctx.throw(401);
     }
 
-    const token = user.generateCheckPatchToken();
+    const token = token_util.generateCheckPatchToken(userid);
     if (!token) {
         ctx.throw(500);
     }
 
-    const token_object = new Token({token, name, type: 1});
-    await token_object.save();
-
-    // TODO check save response
+    const token_object = new Token({userid, token, name, type: 1});
+    try {
+        await token_object.save();
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
 
     // response
     const response = token_object.toJSON();
     ctx.body = response;
-    if (next) {
-        return next();
-    }
 }
 
 /**
  * generate new token
  *
- * @example curl -H "Content-Type: application/json" -X GET -d '{ "status": 0, "type": 1 }' localhost:4002/tokens
  * @param ctx
  * @param next
  * @returns {*}
  */
 export async function list(ctx, next) {
-    debug(ctx.request.body);
-    const status = ctx.request.body.status | 0;
-    const type = ctx.request.body.type | 1;
+    const status = ctx.request.body.status || 0;
+    const type = ctx.request.body.type || 1;
     const userid = auth.getID(ctx);
     if (!userid) {
         ctx.throw(403);
     }
-    const tokens = await Token.find({userid, status, type});
-    // response
-    const response = tokens.toJSON();
-    ctx.body = response;
-    if (next) {
-        return next();
+    let tokens = await Token.find({userid, status, type}).lean();
+    let array = [];
+    for (let token of tokens) {
+        delete token.token;
+        array.push(token);
     }
+    ctx.body = array || [];
 }
 
 /**
@@ -82,54 +78,51 @@ export async function list(ctx, next) {
  * @returns {*}
  */
 export async function detail(ctx, next) {
-    debug(ctx.request.body);
     const id = ctx.params.id;
     if (!id) {
         ctx.throw(400, 'id can not be empty');
     }
-    const password = ctx.params.password;
+    const password = ctx.request.body.password;
     if (!password) {
         ctx.throw(400, 'password can not be empty');
     }
-    const userid = auth.getID(ctx);
-    if (!userid) {
+
+    const user = await auth.getFullUser(ctx);
+    if (!user) {
         ctx.throw(403, 'unvalid token');
     }
 
-    const hashed_password = auth.getPassword(userid);
-    const result = await encrypt.compareHashString(password, hashed_password);
+    const result = await user.validatePassword(password);
     if (!result) {
         ctx.throw(403, 'error password');
     }
 
     let token = null;
     try {
-        token = await Token.findById(id, userid);
+        token = await Token.findById(id);
     } catch (err) {
         ctx.throw(422, 'unvalid id');
     }
     if (!token) {
         ctx.throw(422, 'unvalid id');
     }
+    if (token.userid != user.id) {
+        ctx.throw(403, 'no permission');
+    }
 
     // response
     const response = token.toJSON();
     ctx.body = response;
-    if (next) {
-        return next();
-    }
 }
 
 /**
  * delete token
  *
- * @example curl -H "Content-Type: application/json" -X DELETE localhost:4002/tokens/:id
  * @param ctx
  * @param next
  * @returns {*}
  */
 export async function del(ctx, next) {
-    debug(ctx.request.body);
     const id = ctx.params.id;
     if (!id) {
         ctx.throw(400, 'id can not be empty');
@@ -139,12 +132,9 @@ export async function del(ctx, next) {
         ctx.throw(403);
     }
     try {
-        await Token.remove(id, userid);
+        await Token.remove({_id:id, userid});
     } catch (err) {
         ctx.throw(422, 'unvalid id');
     }
     ctx.status = 204;
-    if (next) {
-        return next();
-    }
 }

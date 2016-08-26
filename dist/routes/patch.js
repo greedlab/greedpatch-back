@@ -18,10 +18,10 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 var Router = require('koa-router');
 
-var base_url = '/projects';
+var base_url = '/patches';
 var router = new Router({ prefix: base_url });
 
-router.get('/:id', _auth.ensureUser, controller.detail).delete('/:id', _auth.ensureUser, controller.del).get('/check', _auth.ensureUser, controller.check);
+router.post('/check', _auth.ensureUser, controller.check).get('/:id', _auth.ensureUser, controller.detail).delete('/:id', _auth.ensureUser, controller.del);
 
 exports.default = {
     baseUrl: base_url,
