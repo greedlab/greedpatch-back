@@ -79,7 +79,7 @@ var list = exports.list = function () {
 
 var register = exports.register = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
-        var user, token, response;
+        var user, payload, token, response;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
@@ -91,28 +91,42 @@ var register = exports.register = function () {
                         if (!regex.validPassword(ctx.request.body.password)) {
                             ctx.throw(400, 'invalid password');
                         }
+
                         user = new _user2.default(ctx.request.body);
                         _context2.prev = 4;
                         _context2.next = 7;
                         return user.save();
 
                     case 7:
-                        _context2.next = 13;
+                        _context2.next = 12;
                         break;
 
                     case 9:
                         _context2.prev = 9;
                         _context2.t0 = _context2['catch'](4);
 
-                        debug(_context2.t0);
-                        ctx.throw(422, 'email is existed');
+                        ctx.throw(500, _context2.t0.message);
 
-                    case 13:
-                        token = token_util.generateToken(user.id);
-                        _context2.next = 16;
-                        return token_tool.saveToken(token);
+                    case 12:
 
-                    case 16:
+                        // generate new token
+                        payload = token_util.generatePayload(user.id);
+                        token = token_util.generateTokenFromPayload(payload);
+                        _context2.prev = 14;
+                        _context2.next = 17;
+                        return token_redis.add(token, payload.exp);
+
+                    case 17:
+                        _context2.next = 22;
+                        break;
+
+                    case 19:
+                        _context2.prev = 19;
+                        _context2.t1 = _context2['catch'](14);
+
+                        ctx.throw(500, _context2.t1.message);
+
+                    case 22:
 
                         // response
                         response = user.toJSON();
@@ -124,18 +138,18 @@ var register = exports.register = function () {
                         };
 
                         if (!next) {
-                            _context2.next = 21;
+                            _context2.next = 27;
                             break;
                         }
 
                         return _context2.abrupt('return', next());
 
-                    case 21:
+                    case 27:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[4, 9]]);
+        }, _callee2, this, [[4, 9], [14, 19]]);
     }));
 
     return function register(_x3, _x4) {
@@ -167,7 +181,7 @@ var login = exports.login = function () {
                         };
                         return _context4.abrupt('return', _koaPassport2.default.authenticate('local', options, function () {
                             var _ref4 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee3(user) {
-                                var token, response;
+                                var payload, token, response;
                                 return regeneratorRuntime.wrap(function _callee3$(_context3) {
                                     while (1) {
                                         switch (_context3.prev = _context3.next) {
@@ -175,11 +189,25 @@ var login = exports.login = function () {
                                                 if (!user) {
                                                     ctx.throw('unvalid email or password', 401);
                                                 }
-                                                token = token_util.generateToken(user.id);
-                                                _context3.next = 4;
-                                                return token_tool.saveToken(token);
 
-                                            case 4:
+                                                // generate new token
+                                                payload = token_util.generatePayload(user.id);
+                                                token = token_util.generateTokenFromPayload(payload);
+                                                _context3.prev = 3;
+                                                _context3.next = 6;
+                                                return token_redis.add(token, payload.exp);
+
+                                            case 6:
+                                                _context3.next = 11;
+                                                break;
+
+                                            case 8:
+                                                _context3.prev = 8;
+                                                _context3.t0 = _context3['catch'](3);
+
+                                                ctx.throw(500, _context3.t0.message);
+
+                                            case 11:
                                                 response = user.toJSON();
 
                                                 delete response.password;
@@ -188,12 +216,12 @@ var login = exports.login = function () {
                                                     user: response
                                                 };
 
-                                            case 7:
+                                            case 14:
                                             case 'end':
                                                 return _context3.stop();
                                         }
                                     }
-                                }, _callee3, _this);
+                                }, _callee3, _this, [[3, 8]]);
                             }));
 
                             return function (_x7) {
@@ -226,28 +254,46 @@ var login = exports.login = function () {
 
 var logout = exports.logout = function () {
     var _ref5 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee5(ctx, next) {
-        var token;
+        var token, payload;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
             while (1) {
                 switch (_context5.prev = _context5.next) {
                     case 0:
-                        try {
-                            token = auth.getToken(ctx);
+                        token = auth.getToken(ctx);
 
-                            if (token) {
-                                (0, _unvalidToken.addToken)(token);
-                            }
-                        } catch (err) {
-                            ctx.throw(422, err.message);
+                        if (!token) {
+                            ctx.throw(422, 'unvalid token');
                         }
+
+                        payload = token_util.getPayload(token);
+
+                        if (!payload || !payload.id) {
+                            ctx.throw(422, 'unvalid token');
+                        }
+
+                        _context5.prev = 4;
+                        _context5.next = 7;
+                        return token_redis.del(token);
+
+                    case 7:
+                        _context5.next = 12;
+                        break;
+
+                    case 9:
+                        _context5.prev = 9;
+                        _context5.t0 = _context5['catch'](4);
+
+                        ctx.throw(500, _context5.t0.message);
+
+                    case 12:
                         ctx.status = 204;
 
-                    case 2:
+                    case 13:
                     case 'end':
                         return _context5.stop();
                 }
             }
-        }, _callee5, this);
+        }, _callee5, this, [[4, 9]]);
     }));
 
     return function logout(_x8, _x9) {
@@ -266,7 +312,7 @@ var logout = exports.logout = function () {
 
 var modifyMyPassword = exports.modifyMyPassword = function () {
     var _ref6 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee6(ctx, next) {
-        var user, password, new_password, equal, hashedNewPassword, token, response;
+        var user, password, new_password, equal, hashedNewPassword, payload, token, old_token, response;
         return regeneratorRuntime.wrap(function _callee6$(_context6) {
             while (1) {
                 switch (_context6.prev = _context6.next) {
@@ -287,63 +333,99 @@ var modifyMyPassword = exports.modifyMyPassword = function () {
                         if (!password || !new_password) {
                             ctx.throw(400);
                         }
-                        _context6.next = 10;
-                        return encrypt.compareHashString(password, user.password);
 
-                    case 10:
+                        if (new_password === password) {
+                            ctx.throw(422, 'please don not set the same password');
+                        }
+
+                        // verify password
+                        _context6.next = 11;
+                        return user.validatePassword(password);
+
+                    case 11:
                         equal = _context6.sent;
 
                         if (!equal) {
                             ctx.throw(401);
                         }
-                        _context6.next = 14;
+
+                        // update password
+                        _context6.prev = 13;
+                        _context6.next = 16;
                         return encrypt.hashString(new_password);
 
-                    case 14:
+                    case 16:
                         hashedNewPassword = _context6.sent;
-                        _context6.prev = 15;
-                        _context6.next = 18;
-                        return user.update({ password: hashedNewPassword });
+                        _context6.next = 19;
+                        return user.update({ $set: { password: hashedNewPassword } });
 
-                    case 18:
-                        _context6.next = 23;
+                    case 19:
+                        _context6.next = 24;
                         break;
 
-                    case 20:
-                        _context6.prev = 20;
-                        _context6.t0 = _context6['catch'](15);
+                    case 21:
+                        _context6.prev = 21;
+                        _context6.t0 = _context6['catch'](13);
 
-                        ctx.throw(422, 'unvalid new_password');
+                        ctx.throw(500, _context6.t0.message);
 
-                    case 23:
-                        // set origin token unvalid
-                        (0, _unvalidToken.addToken)(auth.getToken(ctx));
+                    case 24:
 
-                        token = token_util.generateToken(user.id);
-                        _context6.next = 27;
-                        return token_tool.saveToken(token);
+                        // generate new token
+                        payload = token_util.generatePayload(user.id);
+                        token = token_util.generateTokenFromPayload(payload);
+                        _context6.prev = 26;
+                        _context6.next = 29;
+                        return token_redis.add(token, payload.exp);
 
-                    case 27:
+                    case 29:
+                        _context6.next = 34;
+                        break;
+
+                    case 31:
+                        _context6.prev = 31;
+                        _context6.t1 = _context6['catch'](26);
+
+                        ctx.throw(500, _context6.t1.message);
+
+                    case 34:
+                        _context6.prev = 34;
+                        old_token = auth.getToken(ctx);
+                        _context6.next = 38;
+                        return token_redis.del(old_token);
+
+                    case 38:
+                        _context6.next = 43;
+                        break;
+
+                    case 40:
+                        _context6.prev = 40;
+                        _context6.t2 = _context6['catch'](34);
+
+                        ctx.throw(500, _context6.t2.message);
+
+                    case 43:
                         response = user.toJSON();
 
+                        delete response.password;
                         ctx.body = {
                             token: token,
                             user: response
                         };
 
                         if (!next) {
-                            _context6.next = 31;
+                            _context6.next = 48;
                             break;
                         }
 
                         return _context6.abrupt('return', next());
 
-                    case 31:
+                    case 48:
                     case 'end':
                         return _context6.stop();
                 }
             }
-        }, _callee6, this, [[15, 20]]);
+        }, _callee6, this, [[13, 21], [26, 31], [34, 40]]);
     }));
 
     return function modifyMyPassword(_x10, _x11) {
@@ -367,11 +449,10 @@ var myProfile = exports.myProfile = function () {
             while (1) {
                 switch (_context7.prev = _context7.next) {
                     case 0:
-                        debug(ctx.request.body);
-                        _context7.next = 3;
+                        _context7.next = 2;
                         return auth.getUser(ctx);
 
-                    case 3:
+                    case 2:
                         user = _context7.sent;
 
                         if (!user) {
@@ -382,13 +463,13 @@ var myProfile = exports.myProfile = function () {
                         ctx.body = response;
 
                         if (!next) {
-                            _context7.next = 9;
+                            _context7.next = 8;
                             break;
                         }
 
                         return _context7.abrupt('return', next());
 
-                    case 9:
+                    case 8:
                     case 'end':
                         return _context7.stop();
                 }
@@ -412,7 +493,7 @@ var myProfile = exports.myProfile = function () {
 
 var resetPassword = exports.resetPassword = function () {
     var _ref8 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee8(ctx, next) {
-        var email, user, token, token_object;
+        var email, user, token, text, content;
         return regeneratorRuntime.wrap(function _callee8$(_context8) {
             while (1) {
                 switch (_context8.prev = _context8.next) {
@@ -424,6 +505,7 @@ var resetPassword = exports.resetPassword = function () {
                             ctx.throw(400);
                         }
 
+                        // get user
                         user = null;
                         _context8.prev = 4;
                         _context8.next = 7;
@@ -438,57 +520,54 @@ var resetPassword = exports.resetPassword = function () {
                         _context8.prev = 10;
                         _context8.t0 = _context8['catch'](4);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context8.t0.message);
 
                     case 13:
                         if (!user) {
                             ctx.throw(422, 'user is not existed');
                         }
 
-                        token = token_util.generateSetPasswordToken(user.id);
+                        // save setPwdToken
+                        token = new _setPwdToken2.default({ userid: user.id });
+                        _context8.prev = 15;
+                        _context8.next = 18;
+                        return token.save();
 
-                        // save token
-
-                        token_object = new _token3.default({ token: token, type: 2 });
-                        _context8.prev = 16;
-                        _context8.next = 19;
-                        return token_object.save();
-
-                    case 19:
-                        _context8.next = 24;
+                    case 18:
+                        _context8.next = 23;
                         break;
 
-                    case 21:
-                        _context8.prev = 21;
-                        _context8.t1 = _context8['catch'](16);
+                    case 20:
+                        _context8.prev = 20;
+                        _context8.t1 = _context8['catch'](15);
 
-                        ctx.throw(500);
+                        ctx.throw(500, _context8.t1.message);
 
-                    case 24:
+                    case 23:
 
-                        // TODO send mail
-                        ctx.body = {
-                            message: 'set password from email'
+                        // send mail
+                        text = 'set your password from: \n';
+
+                        text += _url2.default.resolve(_config2.default.frontAddress, '/set-password/' + token.id);
+                        content = {
+                            from: _config2.default.mailFrom, // sender address
+                            to: email, // list of receivers
+                            subject: 'Reset your greedpatch password', // Subject line
+                            text: text // plaintext body
                         };
-                        // const response = user.toJSON();
-                        // ctx.body = {
-                        //     token,
-                        //     user: response
-                        // };
 
-                        if (!next) {
-                            _context8.next = 27;
-                            break;
-                        }
+                        mail.send(content);
 
-                        return _context8.abrupt('return', next());
+                        ctx.body = {
+                            message: 'Please set password from email'
+                        };
 
-                    case 27:
+                    case 28:
                     case 'end':
                         return _context8.stop();
                 }
             }
-        }, _callee8, this, [[4, 10], [16, 21]]);
+        }, _callee8, this, [[4, 10], [15, 20]]);
     }));
 
     return function resetPassword(_x14, _x15) {
@@ -499,7 +578,7 @@ var resetPassword = exports.resetPassword = function () {
 /**
  * set my password
  *
- * @example curl -H "Authorization: Bearer <token>" -X POST -d '{password: "password"}' localhost:4002/set-my-password
+ * @example curl -X POST -d '{token: "token", password: "password"}' localhost:4002/set-my-password
  * @param ctx
  * @param next
  */
@@ -507,64 +586,131 @@ var resetPassword = exports.resetPassword = function () {
 
 var setMyPassword = exports.setMyPassword = function () {
     var _ref9 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee9(ctx, next) {
-        var email, user, token;
+        var token_id, password, setPwdToken, user, same, payload, token;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
             while (1) {
                 switch (_context9.prev = _context9.next) {
                     case 0:
                         debug(ctx.request.body);
-                        email = ctx.request.body.email;
+                        token_id = ctx.request.body.token;
 
-                        if (!email) {
-                            ctx.throw(400, 'email is empty');
+                        if (!token_id) {
+                            ctx.throw(400, 'token is empty');
                         }
-                        if (!regex.validEmail(email)) {
-                            ctx.throw(400, 'unvalid email');
-                        }
-                        user = null;
-                        _context9.prev = 5;
-                        _context9.next = 8;
-                        return _user2.default.find({ email: email }, { password: 0, __v: 0 });
 
-                    case 8:
-                        user = _context9.sent;
-                        _context9.next = 14;
+                        password = ctx.request.body.password;
+
+                        if (!password) {
+                            ctx.throw(400, 'password is empty');
+                        }
+
+                        // valid setPwdToken
+                        setPwdToken = null;
+                        _context9.prev = 6;
+                        _context9.next = 9;
+                        return _setPwdToken2.default.findOne({ _id: token_id, status: 0 });
+
+                    case 9:
+                        setPwdToken = _context9.sent;
+                        _context9.next = 15;
                         break;
 
-                    case 11:
-                        _context9.prev = 11;
-                        _context9.t0 = _context9['catch'](5);
+                    case 12:
+                        _context9.prev = 12;
+                        _context9.t0 = _context9['catch'](6);
 
-                        ctx.throw(422, 'unvalid email');
+                        ctx.throw(500, _context9.t0.message);
 
-                    case 14:
-                        if (!user) {
-                            ctx.throw(422, 'user is not existed');
+                    case 15:
+                        if (!setPwdToken) {
+                            ctx.throw(422, 'unvalid token');
                         }
-                        // TODO send <front >/set-password?token=<token> to email
-                        token = token_util.generateToken(user.id);
-                        _context9.next = 18;
-                        return token_tool.saveToken(token);
 
-                    case 18:
+                        // get user
+                        user = null;
+                        _context9.prev = 17;
+                        _context9.next = 20;
+                        return _user2.default.findById(setPwdToken.userid);
+
+                    case 20:
+                        user = _context9.sent;
+                        _context9.next = 26;
+                        break;
+
+                    case 23:
+                        _context9.prev = 23;
+                        _context9.t1 = _context9['catch'](17);
+
+                        ctx.throw(500, _context9.t1.message);
+
+                    case 26:
+                        if (!user) {
+                            ctx.throw(422, 'unvalid token');
+                        }
+
+                        _context9.prev = 27;
+                        _context9.next = 30;
+                        return user.validatePassword(password);
+
+                    case 30:
+                        same = _context9.sent;
+
+                        if (same) {
+                            _context9.next = 34;
+                            break;
+                        }
+
+                        _context9.next = 34;
+                        return user_redis.setTimestamp(user.id, Date.now());
+
+                    case 34:
+                        _context9.next = 39;
+                        break;
+
+                    case 36:
+                        _context9.prev = 36;
+                        _context9.t2 = _context9['catch'](27);
+
+                        ctx.throw(500, _context9.t2.message);
+
+                    case 39:
+
+                        // generate new token
+                        payload = token_util.generatePayload(user.id);
+                        token = token_util.generateTokenFromPayload(payload);
+                        _context9.prev = 41;
+                        _context9.next = 44;
+                        return token_redis.add(token, payload.exp);
+
+                    case 44:
+                        _context9.next = 49;
+                        break;
+
+                    case 46:
+                        _context9.prev = 46;
+                        _context9.t3 = _context9['catch'](41);
+
+                        ctx.throw(500, _context9.t3.message);
+
+                    case 49:
 
                         ctx.body = {
                             message: 'please set password through your email'
                         };
 
                         if (!next) {
-                            _context9.next = 21;
+                            _context9.next = 52;
                             break;
                         }
 
                         return _context9.abrupt('return', next());
 
-                    case 21:
+                    case 52:
                     case 'end':
                         return _context9.stop();
                 }
             }
-        }, _callee9, this, [[5, 11]]);
+        }, _callee9, this, [[6, 12], [17, 23], [27, 36], [41, 46]]);
     }));
 
     return function setMyPassword(_x16, _x17) {
@@ -583,25 +729,28 @@ var setMyPassword = exports.setMyPassword = function () {
 
 var updatePassword = exports.updatePassword = function () {
     var _ref10 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee10(ctx, next) {
-        var userid, password, user, docs, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, doc, token;
-
+        var userid, password, user, same;
         return regeneratorRuntime.wrap(function _callee10$(_context10) {
             while (1) {
                 switch (_context10.prev = _context10.next) {
                     case 0:
                         debug(ctx.request.body);
                         userid = ctx.params.id;
-                        password = ctx.request.body.password;
 
                         if (!userid) {
                             ctx.throw(400, 'id is empty');
                         }
+
+                        password = ctx.request.body.password;
+
                         if (!password) {
                             ctx.throw(400, 'password is empty');
                         }
                         if (!regex.validPassword(password)) {
                             ctx.throw(400, 'unvalid password');
                         }
+
+                        // get user
                         user = null;
                         _context10.prev = 7;
                         _context10.next = 10;
@@ -623,97 +772,48 @@ var updatePassword = exports.updatePassword = function () {
                             ctx.throw(422, 'user is not existed');
                         }
 
-                        _context10.next = 19;
-                        return _token3.default.find({ userid: userid, status: 0 });
+                        _context10.prev = 17;
+                        _context10.next = 20;
+                        return user.validatePassword(password);
 
-                    case 19:
-                        docs = _context10.sent;
-                        _iteratorNormalCompletion = true;
-                        _didIteratorError = false;
-                        _iteratorError = undefined;
-                        _context10.prev = 23;
-                        _iterator = docs[Symbol.iterator]();
+                    case 20:
+                        same = _context10.sent;
 
-                    case 25:
-                        if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                            _context10.next = 35;
+                        if (same) {
+                            _context10.next = 24;
                             break;
                         }
 
-                        doc = _step.value;
+                        _context10.next = 24;
+                        return user.update({ $set: { password: password, validTokenTimestamp: Date.now() } });
 
-                        if (!doc.token) {
-                            _context10.next = 32;
-                            break;
-                        }
-
-                        _context10.next = 30;
-                        return (0, _unvalidToken.addToken)(doc.token);
-
-                    case 30:
-                        _context10.next = 32;
-                        return doc.update({ status: 1 });
-
-                    case 32:
-                        _iteratorNormalCompletion = true;
-                        _context10.next = 25;
+                    case 24:
+                        _context10.next = 29;
                         break;
 
-                    case 35:
-                        _context10.next = 41;
-                        break;
+                    case 26:
+                        _context10.prev = 26;
+                        _context10.t1 = _context10['catch'](17);
 
-                    case 37:
-                        _context10.prev = 37;
-                        _context10.t1 = _context10['catch'](23);
-                        _didIteratorError = true;
-                        _iteratorError = _context10.t1;
+                        ctx.throw(500, _context10.t1.message);
 
-                    case 41:
-                        _context10.prev = 41;
-                        _context10.prev = 42;
+                    case 29:
 
-                        if (!_iteratorNormalCompletion && _iterator.return) {
-                            _iterator.return();
-                        }
-
-                    case 44:
-                        _context10.prev = 44;
-
-                        if (!_didIteratorError) {
-                            _context10.next = 47;
-                            break;
-                        }
-
-                        throw _iteratorError;
-
-                    case 47:
-                        return _context10.finish(44);
-
-                    case 48:
-                        return _context10.finish(41);
-
-                    case 49:
-                        token = token_util.generateToken(user.id);
-                        _context10.next = 52;
-                        return token_tool.saveToken(token);
-
-                    case 52:
                         ctx.status = 204;
 
                         if (!next) {
-                            _context10.next = 55;
+                            _context10.next = 32;
                             break;
                         }
 
                         return _context10.abrupt('return', next());
 
-                    case 55:
+                    case 32:
                     case 'end':
                         return _context10.stop();
                 }
             }
-        }, _callee10, this, [[7, 13], [23, 37, 41, 49], [42,, 44, 48]]);
+        }, _callee10, this, [[7, 13], [17, 26]]);
     }));
 
     return function updatePassword(_x18, _x19) {
@@ -740,17 +840,21 @@ var updateStatus = exports.updateStatus = function () {
                     case 0:
                         debug(ctx.request.body);
                         userid = ctx.params.id;
-                        status = ctx.request.body.status;
 
                         if (!userid) {
                             ctx.throw(400, 'id is empty');
                         }
+
+                        status = ctx.request.body.status;
+
                         if (!status) {
                             ctx.throw(400, 'status is empty');
                         }
                         if (status < 0 || status > 1) {
                             ctx.throw(400, 'unvalid status');
                         }
+
+                        // get user
                         user = null;
                         _context11.prev = 7;
                         _context11.next = 10;
@@ -765,15 +869,17 @@ var updateStatus = exports.updateStatus = function () {
                         _context11.prev = 13;
                         _context11.t0 = _context11['catch'](7);
 
-                        ctx.throw(422, 'unvalid id');
+                        ctx.throw(500, _context11.t0.message);
 
                     case 16:
                         if (!user) {
                             ctx.throw(422, 'user is not existed');
                         }
+
+                        // update user's status
                         _context11.prev = 17;
                         _context11.next = 20;
-                        return user.update({ status: status });
+                        return user.update({ $set: { status: status } });
 
                     case 20:
                         _context11.next = 25;
@@ -783,9 +889,10 @@ var updateStatus = exports.updateStatus = function () {
                         _context11.prev = 22;
                         _context11.t1 = _context11['catch'](17);
 
-                        ctx.throw(422, 'unvalid status');
+                        ctx.throw(500, _context11.t1.message);
 
                     case 25:
+
                         ctx.status = 204;
 
                         if (!next) {
@@ -812,6 +919,10 @@ var _koaPassport = require('koa-passport');
 
 var _koaPassport2 = _interopRequireDefault(_koaPassport);
 
+var _url = require('url');
+
+var _url2 = _interopRequireDefault(_url);
+
 var _encrypt = require('../utils/encrypt');
 
 var encrypt = _interopRequireWildcard(_encrypt);
@@ -824,23 +935,33 @@ var _token = require('../utils/token');
 
 var token_util = _interopRequireWildcard(_token);
 
+var _mail = require('../utils/mail');
+
+var mail = _interopRequireWildcard(_mail);
+
 var _user = require('../models/user');
 
 var _user2 = _interopRequireDefault(_user);
 
-var _token2 = require('../models/token');
+var _setPwdToken = require('../models/setPwdToken');
 
-var _token3 = _interopRequireDefault(_token2);
+var _setPwdToken2 = _interopRequireDefault(_setPwdToken);
 
-var _unvalidToken = require('../tools/unvalid-token');
+var _token2 = require('../redis/token');
+
+var token_redis = _interopRequireWildcard(_token2);
+
+var _user3 = require('../redis/user');
+
+var user_redis = _interopRequireWildcard(_user3);
 
 var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
 
-var _token4 = require('../tools/token');
+var _config = require('../config');
 
-var token_tool = _interopRequireWildcard(_token4);
+var _config2 = _interopRequireDefault(_config);
 
 var _debug = require('debug');
 
@@ -854,7 +975,9 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var debug = new _debug2.default(_package2.default.name); /**
-                                                          * Created by Bell on 16/8/10.
-                                                          */
+/**
+ * Created by Bell on 16/8/10.
+ */
+
+var debug = new _debug2.default(_package2.default.name);
 //# sourceMappingURL=user.js.map

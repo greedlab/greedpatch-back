@@ -1,60 +1,61 @@
 {
-    "name": "greedpatch-back",
-    "version": "1.0.0",
-    "description": "back end for greedpatch",
-    "main": "dist/app.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "develop": "PORT=4002 DEBUG=greedpatch-back* nodemon -w dist -e js dist/app.js",
-        "release": "PORT=4002 NODE_ENV=release pm2 start dist/app.js  -i 0 --name greedpatch-back --watch"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/greedlab/greedpatch-back.git"
-    },
-    "keywords": [
-        "back",
-        "end",
-        "greedpatch",
-        "patch"
-    ],
-    "author": "Bell <bell@greedlab.com>",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/greedlab/greedpatch-back/issues"
-    },
-    "homepage": "https://github.com/greedlab/greedpatch-back#readme",
-    "dependencies": {
-        "babel-polyfill": "^6.13.0",
-        "bcrypt": "^0.8.7",
-        "bluebird": "^3.4.1",
-        "debug": "^2.2.0",
-        "jsonwebtoken": "^7.1.9",
-        "koa": "^2.0.0-alpha.5",
-        "koa-bodyparser": "^3.2.0",
-        "koa-convert": "^1.2.0",
-        "koa-logger": "^2.0.0",
-        "koa-passport": "^2.2.2",
-        "koa-router": "^7.0.1",
-        "mongoose": "^4.5.9",
-        "passport-local": "^1.0.0",
-        "redis": "^2.6.2"
-    },
-    "devDependencies": {
-        "babel-core": "^6.13.2",
-        "babel-eslint": "^6.1.2",
-        "babel-plugin-transform-async-to-module-method": "^6.8.0",
-        "babel-preset-es2015": "^6.13.2",
-        "babel-preset-stage-0": "^6.5.0",
-        "eslint": "^3.3.1",
-        "eslint-plugin-react": "^6.1.2",
-        "gulp": "^3.9.1",
-        "gulp-babel": "^6.1.2",
-        "gulp-changed": "^1.3.2",
-        "gulp-plumber": "^1.1.0",
-        "gulp-rename": "^1.2.2",
-        "gulp-sourcemaps": "^1.6.0",
-        "gulp-watch": "^4.3.9",
-        "run-sequence": "^1.2.2"
-    }
+  "name": "greedpatch-back",
+  "version": "1.0.0",
+  "description": "back end for greedpatch",
+  "main": "dist/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "develop": "PORT=4002 DEBUG=greedpatch-back* nodemon -w dist -e js dist/app.js",
+    "release": "PORT=4002 NODE_ENV=release pm2 start dist/app.js  -i 0 --name greedpatch-back --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/greedlab/greedpatch-back.git"
+  },
+  "keywords": [
+    "back",
+    "end",
+    "greedpatch",
+    "patch"
+  ],
+  "author": "Bell <bell@greedlab.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/greedlab/greedpatch-back/issues"
+  },
+  "homepage": "https://github.com/greedlab/greedpatch-back#readme",
+  "dependencies": {
+    "babel-polyfill": "^6.13.0",
+    "bcrypt": "^0.8.7",
+    "bluebird": "^3.4.1",
+    "debug": "^2.2.0",
+    "jsonwebtoken": "^7.1.9",
+    "koa": "^2.0.0-alpha.5",
+    "koa-bodyparser": "^3.2.0",
+    "koa-convert": "^1.2.0",
+    "koa-logger": "^2.0.0",
+    "koa-passport": "^2.2.2",
+    "koa-router": "^7.0.1",
+    "mongoose": "^4.5.9",
+    "nodemailer": "^2.5.0",
+    "passport-local": "^1.0.0",
+    "redis": "^2.6.2"
+  },
+  "devDependencies": {
+    "babel-core": "^6.13.2",
+    "babel-eslint": "^6.1.2",
+    "babel-plugin-transform-async-to-module-method": "^6.8.0",
+    "babel-preset-es2015": "^6.13.2",
+    "babel-preset-stage-0": "^6.5.0",
+    "eslint": "^3.3.1",
+    "eslint-plugin-react": "^6.1.2",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "gulp-changed": "^1.3.2",
+    "gulp-plumber": "^1.1.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-watch": "^4.3.9",
+    "run-sequence": "^1.2.2"
+  }
 }

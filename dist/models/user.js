@@ -23,7 +23,6 @@ _mongoose2.default.Promise = global.Promise;
 var User = new _mongoose2.default.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    status: { type: Number, default: 0 },
     role: { type: Number, default: 0 }
 });
 

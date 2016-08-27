@@ -26,11 +26,14 @@ export async function getTokens(userid) {
     return array;
 }
 
-export async function saveToken(token, name, type) {
+export async function saveToken(token, userid, name, type) {
     if (!token) {
-        return;
+        return false;
     }
-    let object = {token};
+    if (!userid) {
+        return false;
+    }
+    let object = {token, userid};
     if (name) {
         object.name = name;
     }

@@ -14,13 +14,9 @@ var _bluebird = require('bluebird');
  * @param next
  * @returns {*}
  */
-/**
- * Created by Bell on 16/8/10.
- */
-
 var ensureUser = exports.ensureUser = function () {
     var _ref = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee(ctx, next) {
-        var token, existed, payload, user;
+        var token, payload, userid, timestamp, status, existed;
         return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
                 switch (_context.prev = _context.next) {
@@ -31,21 +27,9 @@ var ensureUser = exports.ensureUser = function () {
                             ctx.throw(401);
                         }
 
-                        _context.next = 4;
-                        return (0, _unvalidToken.existed)(token);
+                        payload = token_util.getPayload(token);
 
-                    case 4:
-                        existed = _context.sent;
-
-                        if (existed) {
-                            ctx.throw(401);
-                        }
-
-                        payload = null;
-
-                        try {
-                            payload = (0, _jsonwebtoken.verify)(token, _config2.default.token);
-                        } catch (err) {
+                        if (!token) {
                             ctx.throw(401);
                         }
 
@@ -53,43 +37,55 @@ var ensureUser = exports.ensureUser = function () {
                             ctx.throw(401);
                         }
 
-                        if (!payload.id) {
+                        userid = payload.id;
+
+                        if (!userid) {
                             ctx.throw(401);
                         }
 
-                        user = null;
-                        _context.prev = 11;
-                        _context.next = 14;
-                        return _user2.default.findById(payload.id, { password: 0, __v: 0 });
+                        // whether the iat of token less than valid timestamp
+                        _context.next = 9;
+                        return user_redis.getTimestamp(userid);
 
-                    case 14:
-                        user = _context.sent;
-                        _context.next = 20;
-                        break;
+                    case 9:
+                        timestamp = _context.sent;
+
+                        if (timestamp && timestamp > 0) {
+                            if (timestamp > payload.iat) {
+                                ctx.throw(401);
+                            }
+                        }
+
+                        // whether user is disabled
+                        _context.next = 13;
+                        return user_redis.getStatus(userid);
+
+                    case 13:
+                        status = _context.sent;
+
+                        if (status && status != 0) {
+                            ctx.throw(403, 'user is disabled');
+                        }
+
+                        // whether the token is in redis
+                        _context.next = 17;
+                        return token_redis.existed(token);
 
                     case 17:
-                        _context.prev = 17;
-                        _context.t0 = _context['catch'](11);
+                        existed = _context.sent;
 
-                        ctx.throw(401);
-
-                    case 20:
-                        if (!user) {
+                        if (existed == 0) {
                             ctx.throw(401);
-                        }
-
-                        if (user.status != 0) {
-                            ctx.throw(403, 'user is disable');
                         }
 
                         return _context.abrupt('return', next());
 
-                    case 23:
+                    case 20:
                     case 'end':
                         return _context.stop();
                 }
             }
-        }, _callee, this, [[11, 17]]);
+        }, _callee, this);
     }));
 
     return function ensureUser(_x, _x2) {
@@ -104,7 +100,9 @@ var ensureUser = exports.ensureUser = function () {
  * @param next
  * @returns {*}
  */
-
+/**
+ * Created by Bell on 16/8/10.
+ */
 
 var ensureSetPasswordToken = exports.ensureSetPasswordToken = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
@@ -336,9 +334,19 @@ var _config = require('../config');
 
 var _config2 = _interopRequireDefault(_config);
 
-var _jsonwebtoken = require('jsonwebtoken');
+var _token = require('../redis/token');
 
-var _unvalidToken = require('./unvalid-token');
+var token_redis = _interopRequireWildcard(_token);
+
+var _user3 = require('../redis/user');
+
+var user_redis = _interopRequireWildcard(_user3);
+
+var _token2 = require('../utils/token');
+
+var token_util = _interopRequireWildcard(_token2);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -367,7 +375,7 @@ function getToken(ctx) {
 function getPayload(ctx) {
     var token = getToken(ctx);
     if (token) {
-        return (0, _jsonwebtoken.verify)(token, _config2.default.token);
+        return token_util.getPayload(token);
     }
     return null;
 }

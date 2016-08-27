@@ -4,8 +4,9 @@
 
 import User from '../models/user';
 import config from '../config';
-import { verify } from 'jsonwebtoken';
-import { existed as unvalid_token_existed }  from './unvalid-token';
+import * as token_redis from '../redis/token';
+import * as user_redis from '../redis/user';
+import * as token_util from '../utils/token';
 
 /**
  * ensure user login successfully
@@ -20,15 +21,8 @@ export async function ensureUser(ctx, next) {
         ctx.throw(401);
     }
 
-    const existed = await unvalid_token_existed(token);
-    if (existed) {
-        ctx.throw(401);
-    }
-
-    let payload = null;
-    try {
-        payload = verify(token, config.token);
-    } catch (err) {
+    const payload = token_util.getPayload(token);
+    if (!token) {
         ctx.throw(401);
     }
 
@@ -36,22 +30,29 @@ export async function ensureUser(ctx, next) {
         ctx.throw(401);
     }
 
-    if (!payload.id) {
+    const userid = payload.id;
+    if (!userid) {
         ctx.throw(401);
     }
 
-    let user = null;
-    try {
-        user = await User.findById(payload.id, {password: 0, __v: 0});
-    } catch (err) {
-        ctx.throw(401);
-    }
-    if (!user) {
-        ctx.throw(401);
+    // whether the iat of token less than valid timestamp
+    const timestamp = await user_redis.getTimestamp(userid);
+    if (timestamp && timestamp > 0) {
+        if (timestamp > payload.iat) {
+            ctx.throw(401);
+        }
     }
 
-    if (user.status != 0) {
-        ctx.throw(403, 'user is disable');
+    // whether user is disabled
+    const status = await user_redis.getStatus(userid);
+    if (status && status != 0) {
+        ctx.throw(403, 'user is disabled');
+    }
+
+    // whether the token is in redis
+    const existed = await token_redis.existed(token);
+    if (existed == 0) {
+        ctx.throw(401);
     }
 
     return next();
@@ -125,7 +126,7 @@ export function getToken(ctx) {
 export function getPayload(ctx) {
     const token = getToken(ctx);
     if (token) {
-        return verify(token, config.token);
+        return token_util.getPayload(token);
     }
     return null;
 }

@@ -3,14 +3,17 @@
  */
 
 import passport from 'koa-passport';
+import url from 'url';
 import * as encrypt from '../utils/encrypt';
 import * as regex from '../utils/regex';
 import * as token_util from '../utils/token';
+import * as mail from '../utils/mail';
 import User from '../models/user';
-import Token from '../models/token';
-import { addToken as addUnvalidToken } from '../tools/unvalid-token';
+import SetPwdToken from '../models/setPwdToken';
+import * as token_redis from '../redis/token';
+import * as user_redis from '../redis/user';
 import * as auth from '../tools/auth';
-import * as token_tool from '../tools/token';
+import config from '../config';
 import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
@@ -26,7 +29,7 @@ const debug = new Debug(pkg.name);
  */
 export async function list(ctx, next) {
     try {
-        let users = await User.find({},{password: 0, __v: 0});
+        let users = await User.find({}, {password: 0, __v: 0});
         users = users || [];
         ctx.body = {
             users
@@ -58,15 +61,22 @@ export async function register(ctx, next) {
     if (!regex.validPassword(ctx.request.body.password)) {
         ctx.throw(400, 'invalid password');
     }
+
     const user = new User(ctx.request.body);
     try {
         await user.save();
     } catch (err) {
-        debug(err);
-        ctx.throw(422, 'email is existed');
+        ctx.throw(500, err.message);
     }
-    const token = token_util.generateToken(user.id);
-    await token_tool.saveToken(token);
+
+    // generate new token
+    const payload = token_util.generatePayload(user.id);
+    const token = token_util.generateTokenFromPayload(payload);
+    try {
+        await token_redis.add(token, payload.exp);
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
 
     // response
     const response = user.toJSON();
@@ -92,12 +102,19 @@ export async function login(ctx, next) {
     let options = {
         session: false
     };
-    return passport.authenticate('local', options, async (user) => {
+    return passport.authenticate('local', options, async(user) => {
         if (!user) {
             ctx.throw('unvalid email or password', 401);
         }
-        const token = token_util.generateToken(user.id);
-        await token_tool.saveToken(token);
+
+        // generate new token
+        const payload = token_util.generatePayload(user.id);
+        const token = token_util.generateTokenFromPayload(payload);
+        try {
+            await token_redis.add(token, payload.exp);
+        } catch (err) {
+            ctx.throw(500, err.message);
+        }
 
         const response = user.toJSON();
         delete response.password;
@@ -117,13 +134,20 @@ export async function login(ctx, next) {
  * @returns {*}
  */
 export async function logout(ctx, next) {
+    const token = auth.getToken(ctx);
+    if (!token) {
+        ctx.throw(422, 'unvalid token');
+    }
+
+    const payload = token_util.getPayload(token);
+    if (!payload || !payload.id) {
+        ctx.throw(422, 'unvalid token');
+    }
+
     try {
-        const token = auth.getToken(ctx);
-        if (token) {
-            addUnvalidToken(token);
-        }
+        await token_redis.del(token);
     } catch (err) {
-        ctx.throw(422, err.message);
+        ctx.throw(500, err.message);
     }
     ctx.status = 204;
 }
@@ -146,23 +170,44 @@ export async function modifyMyPassword(ctx, next) {
     if (!password || !new_password) {
         ctx.throw(400);
     }
-    const equal = await encrypt.compareHashString(password, user.password);
+
+    if (new_password === password) {
+        ctx.throw(422, 'please don not set the same password');
+    }
+
+    // verify password
+    const equal = await user.validatePassword(password);
     if (!equal) {
         ctx.throw(401);
     }
-    const hashedNewPassword = await encrypt.hashString(new_password);
-    try {
-        await user.update({password: hashedNewPassword});
-    } catch (err) {
-        ctx.throw(422, 'unvalid new_password');
-    }
-    // set origin token unvalid
-    addUnvalidToken(auth.getToken(ctx));
 
-    const token = token_util.generateToken(user.id);
-    await token_tool.saveToken(token);
+    // update password
+    try {
+        const hashedNewPassword = await encrypt.hashString(new_password);
+        await user.update({$set :{password: hashedNewPassword}});
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
+
+    // generate new token
+    const payload = token_util.generatePayload(user.id);
+    const token = token_util.generateTokenFromPayload(payload);
+    try {
+        await token_redis.add(token, payload.exp);
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
+
+    // delete old token
+    try {
+        const old_token = auth.getToken(ctx);
+        await token_redis.del(old_token);
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
 
     const response = user.toJSON();
+    delete response.password;
     ctx.body = {
         token,
         user: response
@@ -180,7 +225,6 @@ export async function modifyMyPassword(ctx, next) {
  * @param next
  */
 export async function myProfile(ctx, next) {
-    debug(ctx.request.body);
     const user = await auth.getUser(ctx);
     if (!user) {
         ctx.throw(401);
@@ -206,71 +250,103 @@ export async function resetPassword(ctx, next) {
         ctx.throw(400);
     }
 
+    // get user
     let user = null;
     try {
         user = await User.findOne({email});
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500, err.message);
     }
     if (!user) {
-        ctx.throw(422,'user is not existed');
+        ctx.throw(422, 'user is not existed');
     }
 
-    const token = token_util.generateSetPasswordToken(user.id);
-
-    // save token
-    const token_object = new Token({token, type: 2});
+    // save setPwdToken
+    const token = new SetPwdToken({userid: user.id});
     try {
-        await token_object.save();
+        await token.save();
     } catch (err) {
-        ctx.throw(500);
+        ctx.throw(500, err.message);
     }
 
-    // TODO send mail
-    ctx.body = {
-        message: 'set password from email'
+    // send mail
+    let text = 'set your password from: \n';
+    text += url.resolve(config.frontAddress, '/set-password/' + token.id);
+    var content = {
+        from: config.mailFrom, // sender address
+        to: email, // list of receivers
+        subject: 'Reset your greedpatch password', // Subject line
+        text: text // plaintext body
     };
-    // const response = user.toJSON();
-    // ctx.body = {
-    //     token,
-    //     user: response
-    // };
-    if (next) {
-        return next();
-    }
+    mail.send(content);
+
+    ctx.body = {
+        message: 'Please set password from email'
+    };
 }
 
 /**
  * set my password
  *
- * @example curl -H "Authorization: Bearer <token>" -X POST -d '{password: "password"}' localhost:4002/set-my-password
+ * @example curl -X POST -d '{token: "token", password: "password"}' localhost:4002/set-my-password
  * @param ctx
  * @param next
  */
 export async function setMyPassword(ctx, next) {
     debug(ctx.request.body);
-    const email = ctx.request.body.email;
-    if (!email) {
-        ctx.throw(400, 'email is empty');
+    const token_id = ctx.request.body.token;
+    if (!token_id) {
+        ctx.throw(400, 'token is empty');
     }
-    if (!regex.validEmail(email)) {
-        ctx.throw(400, 'unvalid email');
+
+    const password = ctx.request.body.password;
+    if (!password) {
+        ctx.throw(400, 'password is empty');
     }
+
+    // valid setPwdToken
+    let setPwdToken = null;
+    try {
+        setPwdToken = await SetPwdToken.findOne({_id: token_id, status: 0});
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
+    if (!setPwdToken) {
+        ctx.throw(422, 'unvalid token');
+    }
+
+    // get user
     let user = null;
     try {
-        user = await User.find({email: email},{password: 0, __v: 0});
+        user = await User.findById(setPwdToken.userid);
     } catch (err) {
-        ctx.throw(422, 'unvalid email');
+        ctx.throw(500, err.message);
     }
     if (!user) {
-        ctx.throw(422, 'user is not existed');
+        ctx.throw(422, 'unvalid token');
     }
-    // TODO send <front >/set-password?token=<token> to email
-    const token = token_util.generateToken(user.id);
-    await token_tool.saveToken(token);
+
+    try {
+        // whether set the same password
+        const same = await user.validatePassword(password);
+        if (!same) {
+            await user_redis.setTimestamp(user.id, Date.now());
+        }
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
+
+    // generate new token
+    const payload = token_util.generatePayload(user.id);
+    const token = token_util.generateTokenFromPayload(payload);
+    try {
+        await token_redis.add(token, payload.exp);
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
 
     ctx.body = {
-        message : 'please set password through your email'
+        message: 'please set password through your email'
     };
     if (next) {
         return next();
@@ -287,16 +363,19 @@ export async function setMyPassword(ctx, next) {
 export async function updatePassword(ctx, next) {
     debug(ctx.request.body);
     const userid = ctx.params.id;
-    const password = ctx.request.body.password;
     if (!userid) {
         ctx.throw(400, 'id is empty');
     }
+
+    const password = ctx.request.body.password;
     if (!password) {
         ctx.throw(400, 'password is empty');
     }
     if (!regex.validPassword(password)) {
         ctx.throw(400, 'unvalid password');
     }
+
+    // get user
     let user = null;
     try {
         user = await User.findById(userid, {password: 0, __v: 0});
@@ -307,15 +386,17 @@ export async function updatePassword(ctx, next) {
         ctx.throw(422, 'user is not existed');
     }
 
-    const docs = await Token.find({userid, status: 0});
-    for (let doc of docs) {
-        if (doc.token) {
-            await addUnvalidToken(doc.token);
-            await doc.update({status: 1});
+    try {
+        // whether set the same password
+        const same = await user.validatePassword(password);
+        if (!same) {
+            // update user's password and validTokenTimestamp
+            await user.update({$set: {password, validTokenTimestamp: Date.now()}});
         }
+    } catch (err) {
+        ctx.throw(500, err.message);
     }
-    const token = token_util.generateToken(user.id);
-    await token_tool.saveToken(token);
+
     ctx.status = 204;
     if (next) {
         return next();
@@ -333,32 +414,39 @@ export async function updatePassword(ctx, next) {
 export async function updateStatus(ctx, next) {
     debug(ctx.request.body);
     const userid = ctx.params.id;
-    const status = ctx.request.body.status;
     if (!userid) {
         ctx.throw(400, 'id is empty');
     }
+
+    const status = ctx.request.body.status;
     if (!status) {
         ctx.throw(400, 'status is empty');
     }
     if (status < 0 || status > 1) {
         ctx.throw(400, 'unvalid status');
     }
+
+    // get user
     let user = null;
     try {
         user = await User.findById(userid, {password: 0, __v: 0});
     } catch (err) {
-        ctx.throw(422, 'unvalid id');
+        ctx.throw(500, err.message);
     }
     if (!user) {
         ctx.throw(422, 'user is not existed');
     }
+
+    // update user's status
     try {
-        await user.update({status: status});
+        await user.update({$set: {status: status}});
     } catch (err) {
-        ctx.throw(422, 'unvalid status');
+        ctx.throw(500, err.message);
     }
+
     ctx.status = 204;
     if (next) {
         return next();
     }
 }
+

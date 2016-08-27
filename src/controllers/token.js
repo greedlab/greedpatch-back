@@ -3,6 +3,8 @@
  */
 
 import * as token_util from '../utils/token';
+import * as token_redis from '../redis/token';
+import * as user_redis from '../redis/user';
 import Token from '../models/token';
 import * as auth from '../tools/auth';
 import Debug from 'debug';
@@ -29,7 +31,8 @@ export async function generate(ctx, next) {
         ctx.throw(401);
     }
 
-    const token = token_util.generateCheckPatchToken(userid);
+    const payload = token_util.generateCheckPatchPayload(userid);
+    const token = token_util.generateTokenFromPayload(payload);
     if (!token) {
         ctx.throw(500);
     }
@@ -37,6 +40,7 @@ export async function generate(ctx, next) {
     const token_object = new Token({userid, token, name, type: 1});
     try {
         await token_object.save();
+        await token_redis.add(token, payload.exp);
     } catch (err) {
         ctx.throw(500, err.message);
     }
@@ -54,17 +58,23 @@ export async function generate(ctx, next) {
  * @returns {*}
  */
 export async function list(ctx, next) {
-    const status = ctx.request.body.status || 0;
     const type = ctx.request.body.type || 1;
     const userid = auth.getID(ctx);
     if (!userid) {
         ctx.throw(403);
     }
-    let tokens = await Token.find({userid, status, type}).lean();
+    let tokens = await Token.find({userid, type}).lean();
     let array = [];
     for (let token of tokens) {
-        delete token.token;
-        array.push(token);
+        const payload = token_util.getPayload(token);
+        if (payload) {
+            const timestamp = await user_redis.getTimestamp(payload.id);
+            // whether token is valid
+            if (!timestamp || timestamp == 0 || payload.iat > timestamp) {
+                delete token.token;
+                array.push(token);
+            }
+        }
     }
     ctx.body = array || [];
 }

@@ -126,7 +126,7 @@ var getTokens = exports.getTokens = function () {
 }();
 
 var saveToken = exports.saveToken = function () {
-    var _ref3 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee3(token, name, type) {
+    var _ref3 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee3(token, userid, name, type) {
         var object, token_object;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
@@ -137,10 +137,18 @@ var saveToken = exports.saveToken = function () {
                             break;
                         }
 
-                        return _context3.abrupt('return');
+                        return _context3.abrupt('return', false);
 
                     case 2:
-                        object = { token: token };
+                        if (userid) {
+                            _context3.next = 4;
+                            break;
+                        }
+
+                        return _context3.abrupt('return', false);
+
+                    case 4:
+                        object = { token: token, userid: userid };
 
                         if (name) {
                             object.name = name;
@@ -149,10 +157,10 @@ var saveToken = exports.saveToken = function () {
                             object.type = type;
                         }
                         token_object = new _token2.default(object);
-                        _context3.next = 8;
+                        _context3.next = 10;
                         return token_object.save();
 
-                    case 8:
+                    case 10:
                     case 'end':
                         return _context3.stop();
                 }
@@ -160,7 +168,7 @@ var saveToken = exports.saveToken = function () {
         }, _callee3, this);
     }));
 
-    return function saveToken(_x3, _x4, _x5) {
+    return function saveToken(_x3, _x4, _x5, _x6) {
         return _ref3.apply(this, arguments);
     };
 }();

@@ -16,7 +16,7 @@ var _bluebird = require('bluebird');
  */
 var generate = exports.generate = function () {
     var _ref = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee(ctx, next) {
-        var name, userid, token, token_object, response;
+        var name, userid, payload, token, token_object, response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
                 switch (_context.prev = _context.next) {
@@ -35,40 +35,45 @@ var generate = exports.generate = function () {
                             ctx.throw(401);
                         }
 
-                        token = token_util.generateCheckPatchToken(userid);
+                        payload = token_util.generateCheckPatchPayload(userid);
+                        token = token_util.generateTokenFromPayload(payload);
 
                         if (!token) {
                             ctx.throw(500);
                         }
 
-                        token_object = new _token3.default({ userid: userid, token: token, name: name, type: 1 });
-                        _context.prev = 8;
-                        _context.next = 11;
+                        token_object = new _token4.default({ userid: userid, token: token, name: name, type: 1 });
+                        _context.prev = 9;
+                        _context.next = 12;
                         return token_object.save();
 
-                    case 11:
-                        _context.next = 16;
+                    case 12:
+                        _context.next = 14;
+                        return token_redis.add(token, payload.exp);
+
+                    case 14:
+                        _context.next = 19;
                         break;
 
-                    case 13:
-                        _context.prev = 13;
-                        _context.t0 = _context['catch'](8);
+                    case 16:
+                        _context.prev = 16;
+                        _context.t0 = _context['catch'](9);
 
                         ctx.throw(500, _context.t0.message);
 
-                    case 16:
+                    case 19:
 
                         // response
                         response = token_object.toJSON();
 
                         ctx.body = response;
 
-                    case 18:
+                    case 21:
                     case 'end':
                         return _context.stop();
                 }
             }
-        }, _callee, this, [[8, 13]]);
+        }, _callee, this, [[9, 16]]);
     }));
 
     return function generate(_x, _x2) {
@@ -87,78 +92,104 @@ var generate = exports.generate = function () {
 
 var list = exports.list = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
-        var status, type, userid, tokens, array, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, token;
+        var type, userid, tokens, array, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, token, payload, timestamp;
 
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
-                        status = ctx.request.body.status || 0;
                         type = ctx.request.body.type || 1;
                         userid = auth.getID(ctx);
 
                         if (!userid) {
                             ctx.throw(403);
                         }
-                        _context2.next = 6;
-                        return _token3.default.find({ userid: userid, status: status, type: type }).lean();
+                        _context2.next = 5;
+                        return _token4.default.find({ userid: userid, type: type }).lean();
 
-                    case 6:
+                    case 5:
                         tokens = _context2.sent;
                         array = [];
                         _iteratorNormalCompletion = true;
                         _didIteratorError = false;
                         _iteratorError = undefined;
-                        _context2.prev = 11;
+                        _context2.prev = 10;
+                        _iterator = tokens[Symbol.iterator]();
 
-                        for (_iterator = tokens[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                            token = _step.value;
+                    case 12:
+                        if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+                            _context2.next = 23;
+                            break;
+                        }
 
+                        token = _step.value;
+                        payload = token_util.getPayload(token);
+
+                        if (!payload) {
+                            _context2.next = 20;
+                            break;
+                        }
+
+                        _context2.next = 18;
+                        return user_redis.getTimestamp(payload.id);
+
+                    case 18:
+                        timestamp = _context2.sent;
+
+                        // whether token is valid
+                        if (!timestamp || timestamp == 0 || payload.iat > timestamp) {
                             delete token.token;
                             array.push(token);
                         }
-                        _context2.next = 19;
+
+                    case 20:
+                        _iteratorNormalCompletion = true;
+                        _context2.next = 12;
                         break;
 
-                    case 15:
-                        _context2.prev = 15;
-                        _context2.t0 = _context2['catch'](11);
+                    case 23:
+                        _context2.next = 29;
+                        break;
+
+                    case 25:
+                        _context2.prev = 25;
+                        _context2.t0 = _context2['catch'](10);
                         _didIteratorError = true;
                         _iteratorError = _context2.t0;
 
-                    case 19:
-                        _context2.prev = 19;
-                        _context2.prev = 20;
+                    case 29:
+                        _context2.prev = 29;
+                        _context2.prev = 30;
 
                         if (!_iteratorNormalCompletion && _iterator.return) {
                             _iterator.return();
                         }
 
-                    case 22:
-                        _context2.prev = 22;
+                    case 32:
+                        _context2.prev = 32;
 
                         if (!_didIteratorError) {
-                            _context2.next = 25;
+                            _context2.next = 35;
                             break;
                         }
 
                         throw _iteratorError;
 
-                    case 25:
-                        return _context2.finish(22);
+                    case 35:
+                        return _context2.finish(32);
 
-                    case 26:
-                        return _context2.finish(19);
+                    case 36:
+                        return _context2.finish(29);
 
-                    case 27:
+                    case 37:
                         ctx.body = array || [];
 
-                    case 28:
+                    case 38:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[11, 15, 19, 27], [20,, 22, 26]]);
+        }, _callee2, this, [[10, 25, 29, 37], [30,, 32, 36]]);
     }));
 
     return function list(_x3, _x4) {
@@ -217,7 +248,7 @@ var detail = exports.detail = function () {
                         token = null;
                         _context3.prev = 13;
                         _context3.next = 16;
-                        return _token3.default.findById(id);
+                        return _token4.default.findById(id);
 
                     case 16:
                         token = _context3.sent;
@@ -284,7 +315,7 @@ var del = exports.del = function () {
                         }
                         _context4.prev = 4;
                         _context4.next = 7;
-                        return _token3.default.remove({ _id: id, userid: userid });
+                        return _token4.default.remove({ _id: id, userid: userid });
 
                     case 7:
                         _context4.next = 12;
@@ -316,9 +347,17 @@ var _token = require('../utils/token');
 
 var token_util = _interopRequireWildcard(_token);
 
-var _token2 = require('../models/token');
+var _token2 = require('../redis/token');
 
-var _token3 = _interopRequireDefault(_token2);
+var token_redis = _interopRequireWildcard(_token2);
+
+var _user = require('../redis/user');
+
+var user_redis = _interopRequireWildcard(_user);
+
+var _token3 = require('../models/token');
+
+var _token4 = _interopRequireDefault(_token3);
 
 var _auth = require('../tools/auth');
 
