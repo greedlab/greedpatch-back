@@ -41,3 +41,6 @@ jspm_packages
 
 # config
 develop.js*
+
+# temp
+dump.rdb
