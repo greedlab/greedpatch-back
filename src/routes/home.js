@@ -21,6 +21,6 @@ router
     .post('/set-my-password', user.setMyPassword);
 
 export default {
-    baseUrl: base_url,
+    base_url,
     router: router
 };

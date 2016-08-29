@@ -793,14 +793,6 @@ var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
 
-var _encrypt = require('../utils/encrypt');
-
-var encrypt = _interopRequireWildcard(_encrypt);
-
-var _array = require('../utils/array');
-
-var array_util = _interopRequireWildcard(_array);
-
 var _debug = require('debug');
 
 var _debug2 = _interopRequireDefault(_debug);

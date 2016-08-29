@@ -24,7 +24,7 @@ var router = new Router({ prefix: base_url });
 router.get('/:type', _auth.ensureUser, _auth.ensureManager, controller.get).put('/:type', _auth.ensureUser, _auth.ensureManager, controller.set);
 
 exports.default = {
-    baseUrl: base_url,
+    base_url: base_url,
     router: router
 };
 //# sourceMappingURL=permission.js.map

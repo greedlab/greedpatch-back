@@ -24,7 +24,7 @@ var router = new Router({ prefix: base_url });
 router.post('/check', _auth.ensureUser, controller.check).get('/:id', _auth.ensureUser, controller.detail).delete('/:id', _auth.ensureUser, controller.del);
 
 exports.default = {
-    baseUrl: base_url,
+    base_url: base_url,
     router: router
 };
 //# sourceMappingURL=patch.js.map

@@ -5,8 +5,6 @@
 import Project from '../models/project';
 import User from '../models/user';
 import * as auth from '../tools/auth';
-import * as encrypt from '../utils/encrypt';
-import * as array_util from '../utils/array';
 import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
