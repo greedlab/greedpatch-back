@@ -75,7 +75,7 @@ User.pre('save', function () {
 
 User.methods.validatePassword = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(password) {
-        var user, result;
+        var user;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
@@ -85,10 +85,9 @@ User.methods.validatePassword = function () {
                         return (0, _encrypt.compareHashString)(password, user.password);
 
                     case 3:
-                        result = _context2.sent;
-                        return _context2.abrupt('return', result);
+                        return _context2.abrupt('return', _context2.sent);
 
-                    case 5:
+                    case 4:
                     case 'end':
                         return _context2.stop();
                 }
@@ -101,6 +100,40 @@ User.methods.validatePassword = function () {
     }
 
     return validatePassword;
+}();
+
+User.methods.updatePassword = function () {
+    var _ref3 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee3(password) {
+        var user, hashedNewPassword;
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            while (1) {
+                switch (_context3.prev = _context3.next) {
+                    case 0:
+                        user = this;
+                        _context3.next = 3;
+                        return (0, _encrypt.hashString)(password);
+
+                    case 3:
+                        hashedNewPassword = _context3.sent;
+                        _context3.next = 6;
+                        return user.update({ $set: { password: hashedNewPassword } });
+
+                    case 6:
+                        return _context3.abrupt('return', _context3.sent);
+
+                    case 7:
+                    case 'end':
+                        return _context3.stop();
+                }
+            }
+        }, _callee3, this);
+    }));
+
+    function updatePassword(_x3) {
+        return _ref3.apply(this, arguments);
+    }
+
+    return updatePassword;
 }();
 
 exports.default = _mongoose2.default.model('user', User);

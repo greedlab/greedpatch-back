@@ -54,7 +54,6 @@ export async function list(ctx, next) {
  * @returns {*}
  */
 export async function register(ctx, next) {
-    debug(ctx.request.body);
     if (!regex.validEmail(ctx.request.body.email)) {
         ctx.throw(400, 'invalid email');
     }
@@ -160,7 +159,6 @@ export async function logout(ctx, next) {
  * @param next
  */
 export async function modifyMyPassword(ctx, next) {
-    debug(ctx.request.body);
     const user = await auth.getFullUser(ctx);
     if (!user) {
         ctx.throw(401);
@@ -171,20 +169,20 @@ export async function modifyMyPassword(ctx, next) {
         ctx.throw(400);
     }
 
-    if (new_password === password) {
-        ctx.throw(422, 'please don not set the same password');
-    }
-
     // verify password
     const equal = await user.validatePassword(password);
     if (!equal) {
         ctx.throw(401);
     }
 
-    // update password
+    if (new_password === password) {
+        ctx.throw(422, 'please don not use the same password');
+    }
+
+    // udpate password and token valid timestamp
     try {
-        const hashedNewPassword = await encrypt.hashString(new_password);
-        await user.update({$set :{password: hashedNewPassword}});
+        await user.updatePassword(new_password);
+        await user_redis.setTimestamp(user.id, Date.now());
     } catch (err) {
         ctx.throw(500, err.message);
     }
@@ -270,15 +268,15 @@ export async function resetPassword(ctx, next) {
     }
 
     // send mail
-    let text = 'set your password from: \n';
+    let text = 'set your password from: ';
     text += url.resolve(config.frontAddress, '/set-password/' + token.id);
     var content = {
         from: config.mailFrom, // sender address
         to: email, // list of receivers
-        subject: 'Reset your greedpatch password', // Subject line
+        subject: 'Reset your password of greedpatch', // Subject line
         text: text // plaintext body
     };
-    mail.send(content);
+    await mail.send(content);
 
     ctx.body = {
         message: 'Please set password from email'
@@ -293,7 +291,6 @@ export async function resetPassword(ctx, next) {
  * @param next
  */
 export async function setMyPassword(ctx, next) {
-    debug(ctx.request.body);
     const token_id = ctx.request.body.token;
     if (!token_id) {
         ctx.throw(400, 'token is empty');
@@ -326,12 +323,14 @@ export async function setMyPassword(ctx, next) {
         ctx.throw(422, 'unvalid token');
     }
 
+    if (user.password === password) {
+        ctx.throw(422, 'please don not use the same password');
+    }
+
+    // udpate password and token valid timestamp
     try {
-        // whether set the same password
-        const same = await user.validatePassword(password);
-        if (!same) {
-            await user_redis.setTimestamp(user.id, Date.now());
-        }
+        await user.updatePassword(password);
+        await user_redis.setTimestamp(user.id, Date.now());
     } catch (err) {
         ctx.throw(500, err.message);
     }
@@ -345,8 +344,11 @@ export async function setMyPassword(ctx, next) {
         ctx.throw(500, err.message);
     }
 
+    const response = user.toJSON();
+    delete response.password;
     ctx.body = {
-        message: 'please set password through your email'
+        token,
+        user: response
     };
     if (next) {
         return next();
@@ -361,7 +363,6 @@ export async function setMyPassword(ctx, next) {
  * @param next
  */
 export async function updatePassword(ctx, next) {
-    debug(ctx.request.body);
     const userid = ctx.params.id;
     if (!userid) {
         ctx.throw(400, 'id is empty');
@@ -386,16 +387,18 @@ export async function updatePassword(ctx, next) {
         ctx.throw(422, 'user is not existed');
     }
 
+    if (user.password === password) {
+        ctx.throw(422, 'please don not use the same password');
+    }
+
+    // udpate password and token valid timestamp
     try {
-        // whether set the same password
-        const same = await user.validatePassword(password);
-        if (!same) {
-            // update user's password and validTokenTimestamp
-            await user.update({$set: {password, validTokenTimestamp: Date.now()}});
-        }
+        await user.updatePassword(password);
+        await user_redis.setTimestamp(user.id, Date.now());
     } catch (err) {
         ctx.throw(500, err.message);
     }
+
 
     ctx.status = 204;
     if (next) {

@@ -30,8 +30,13 @@ User.pre('save', async function preSave(next) {
 
 User.methods.validatePassword = async function validatePassword(password) {
     const user = this;
-    const result = await compareHashString(password, user.password);
-    return result;
+    return await compareHashString(password, user.password);
+};
+
+User.methods.updatePassword = async function updatePassword(password) {
+    const user = this;
+    const hashedNewPassword = await hashString(password);
+    return await user.update({$set:{password: hashedNewPassword}});
 };
 
 export default mongoose.model('user', User);

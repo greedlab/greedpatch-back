@@ -9,11 +9,14 @@ export default {
 
     },
     frontAddress: 'http://localhost:4001/',
-    mailUser: 'test@greedlab.com',
-    mailPassword: 'password',
-    mailHost: 'md-hk-1.webhostbox.net',
-    mailPort: 465,
-    mailSecure: true, // use SSL
-
+    mailConfig: {
+        host: 'smtp.greedlab.com',
+        port: 465,
+        secure: true, // use SSL
+        auth: {
+            user: 'test@greedlab.com',
+            pass: 'password'
+        }
+    },
     mailFrom: 'test@greedlab.com'
 };
