@@ -13,6 +13,7 @@ import SetPwdToken from '../models/setPwdToken';
 import * as token_redis from '../redis/token';
 import * as user_redis from '../redis/user';
 import * as auth from '../tools/auth';
+import * as check from '../tools/check';
 import config from '../config';
 import Debug from 'debug';
 import pkg from '../../package.json';
@@ -54,18 +55,44 @@ export async function list(ctx, next) {
  * @returns {*}
  */
 export async function register(ctx, next) {
-    if (!regex.validEmail(ctx.request.body.email)) {
-        ctx.throw(400, 'invalid email');
+    const email = ctx.request.body.email;
+    if (!check.checkEmptyEmail(ctx, email)) {
+        return;
     }
-    if (!regex.validPassword(ctx.request.body.password)) {
-        ctx.throw(400, 'invalid password');
+    if (!check.checkValidEmail(ctx, email)) {
+        return;
     }
 
-    const user = new User(ctx.request.body);
+    const password = ctx.request.body.password;
+    if (!check.checkEmptyPassword(ctx, password)) {
+        return;
+    }
+    if (!check.checkValidPassword(ctx, password)) {
+        return;
+    }
+
+    const user = new User({email, password});
     try {
-        await user.save();
+        const existed = await User.findOne({email});
+        if (existed) {
+            ctx.status = 422;
+            ctx.body = {
+                message: 'User is existed',
+                errors: [
+                    {
+                        resource: 'User',
+                        field: 'email',
+                        code: 'already_exists'
+                    }
+                ]
+            };
+            return;
+        } else {
+            await user.save();
+        }
     } catch (err) {
-        ctx.throw(500, err.message);
+        debug(err);
+        ctx.throw(500);
     }
 
     // generate new token
@@ -74,7 +101,8 @@ export async function register(ctx, next) {
     try {
         await token_redis.add(token, payload.exp);
     } catch (err) {
-        ctx.throw(500, err.message);
+        debug(err);
+        ctx.throw(500);
     }
 
     // response
@@ -98,12 +126,23 @@ export async function register(ctx, next) {
  * @returns {*}
  */
 export async function login(ctx, next) {
+    const email = ctx.request.body.email;
+    if (!check.checkEmptyEmail(ctx, email)) {
+        return;
+    }
+
+    const password = ctx.request.body.password;
+    if (!check.checkEmptyPassword(ctx, password)) {
+        return;
+    }
+
     let options = {
         session: false
     };
     return passport.authenticate('local', options, async(user) => {
         if (!user) {
-            ctx.throw('unvalid email or password', 401);
+            check.authenticationFailed(ctx);
+            return;
         }
 
         // generate new token
@@ -244,8 +283,11 @@ export async function myProfile(ctx, next) {
 export async function resetPassword(ctx, next) {
     debug(ctx.request.body);
     const email = ctx.request.body.email;
-    if (!email) {
-        ctx.throw(400);
+    if (!check.checkEmptyEmail(ctx, email)) {
+        return;
+    }
+    if (!check.checkValidEmail(ctx, email)) {
+        return;
     }
 
     // get user
@@ -253,10 +295,10 @@ export async function resetPassword(ctx, next) {
     try {
         user = await User.findOne({email});
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
     if (!user) {
-        ctx.throw(422, 'user is not existed');
+        check.emailIsNotExisted(ctx);
     }
 
     // save setPwdToken
@@ -264,7 +306,7 @@ export async function resetPassword(ctx, next) {
     try {
         await token.save();
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
 
     // send mail

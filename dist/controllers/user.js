@@ -79,53 +79,107 @@ var list = exports.list = function () {
 
 var register = exports.register = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
-        var user, payload, token, response;
+        var email, password, user, existed, payload, token, response;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
-                        if (!regex.validEmail(ctx.request.body.email)) {
-                            ctx.throw(400, 'invalid email');
-                        }
-                        if (!regex.validPassword(ctx.request.body.password)) {
-                            ctx.throw(400, 'invalid password');
+                        email = ctx.request.body.email;
+
+                        if (check.checkEmptyEmail(ctx, email)) {
+                            _context2.next = 3;
+                            break;
                         }
 
-                        user = new _user2.default(ctx.request.body);
-                        _context2.prev = 3;
-                        _context2.next = 6;
-                        return user.save();
+                        return _context2.abrupt('return');
 
-                    case 6:
-                        _context2.next = 11;
-                        break;
+                    case 3:
+                        if (check.checkValidEmail(ctx, email)) {
+                            _context2.next = 5;
+                            break;
+                        }
+
+                        return _context2.abrupt('return');
+
+                    case 5:
+                        password = ctx.request.body.password;
+
+                        if (check.checkEmptyPassword(ctx, password)) {
+                            _context2.next = 8;
+                            break;
+                        }
+
+                        return _context2.abrupt('return');
 
                     case 8:
-                        _context2.prev = 8;
-                        _context2.t0 = _context2['catch'](3);
+                        if (check.checkValidPassword(ctx, password)) {
+                            _context2.next = 10;
+                            break;
+                        }
 
-                        ctx.throw(500, _context2.t0.message);
+                        return _context2.abrupt('return');
 
-                    case 11:
+                    case 10:
+                        user = new _user2.default({ email: email, password: password });
+                        _context2.prev = 11;
+                        _context2.next = 14;
+                        return _user2.default.findOne({ email: email });
+
+                    case 14:
+                        existed = _context2.sent;
+
+                        if (!existed) {
+                            _context2.next = 21;
+                            break;
+                        }
+
+                        ctx.status = 422;
+                        ctx.body = {
+                            message: 'User is existed',
+                            errors: [{
+                                resource: 'User',
+                                field: 'email',
+                                code: 'already_exists'
+                            }]
+                        };
+                        return _context2.abrupt('return');
+
+                    case 21:
+                        _context2.next = 23;
+                        return user.save();
+
+                    case 23:
+                        _context2.next = 29;
+                        break;
+
+                    case 25:
+                        _context2.prev = 25;
+                        _context2.t0 = _context2['catch'](11);
+
+                        debug(_context2.t0);
+                        ctx.throw(500);
+
+                    case 29:
 
                         // generate new token
                         payload = token_util.generatePayload(user.id);
                         token = token_util.generateTokenFromPayload(payload);
-                        _context2.prev = 13;
-                        _context2.next = 16;
+                        _context2.prev = 31;
+                        _context2.next = 34;
                         return token_redis.add(token, payload.exp);
 
-                    case 16:
-                        _context2.next = 21;
+                    case 34:
+                        _context2.next = 40;
                         break;
 
-                    case 18:
-                        _context2.prev = 18;
-                        _context2.t1 = _context2['catch'](13);
+                    case 36:
+                        _context2.prev = 36;
+                        _context2.t1 = _context2['catch'](31);
 
-                        ctx.throw(500, _context2.t1.message);
+                        debug(_context2.t1);
+                        ctx.throw(500);
 
-                    case 21:
+                    case 40:
 
                         // response
                         response = user.toJSON();
@@ -137,18 +191,18 @@ var register = exports.register = function () {
                         };
 
                         if (!next) {
-                            _context2.next = 26;
+                            _context2.next = 45;
                             break;
                         }
 
                         return _context2.abrupt('return', next());
 
-                    case 26:
+                    case 45:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[3, 8], [13, 18]]);
+        }, _callee2, this, [[11, 25], [31, 36]]);
     }));
 
     return function register(_x3, _x4) {
@@ -170,11 +224,31 @@ var login = exports.login = function () {
     var _ref3 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee4(ctx, next) {
         var _this = this;
 
-        var options;
+        var email, password, options;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
                 switch (_context4.prev = _context4.next) {
                     case 0:
+                        email = ctx.request.body.email;
+
+                        if (check.checkEmptyEmail(ctx, email)) {
+                            _context4.next = 3;
+                            break;
+                        }
+
+                        return _context4.abrupt('return');
+
+                    case 3:
+                        password = ctx.request.body.password;
+
+                        if (check.checkEmptyPassword(ctx, password)) {
+                            _context4.next = 6;
+                            break;
+                        }
+
+                        return _context4.abrupt('return');
+
+                    case 6:
                         options = {
                             session: false
                         };
@@ -185,28 +259,34 @@ var login = exports.login = function () {
                                     while (1) {
                                         switch (_context3.prev = _context3.next) {
                                             case 0:
-                                                if (!user) {
-                                                    ctx.throw('unvalid email or password', 401);
+                                                if (user) {
+                                                    _context3.next = 3;
+                                                    break;
                                                 }
+
+                                                check.authenticationFailed(ctx);
+                                                return _context3.abrupt('return');
+
+                                            case 3:
 
                                                 // generate new token
                                                 payload = token_util.generatePayload(user.id);
                                                 token = token_util.generateTokenFromPayload(payload);
-                                                _context3.prev = 3;
-                                                _context3.next = 6;
+                                                _context3.prev = 5;
+                                                _context3.next = 8;
                                                 return token_redis.add(token, payload.exp);
 
-                                            case 6:
-                                                _context3.next = 11;
+                                            case 8:
+                                                _context3.next = 13;
                                                 break;
 
-                                            case 8:
-                                                _context3.prev = 8;
-                                                _context3.t0 = _context3['catch'](3);
+                                            case 10:
+                                                _context3.prev = 10;
+                                                _context3.t0 = _context3['catch'](5);
 
                                                 ctx.throw(500, _context3.t0.message);
 
-                                            case 11:
+                                            case 13:
                                                 response = user.toJSON();
 
                                                 delete response.password;
@@ -215,12 +295,12 @@ var login = exports.login = function () {
                                                     user: response
                                                 };
 
-                                            case 14:
+                                            case 16:
                                             case 'end':
                                                 return _context3.stop();
                                         }
                                     }
-                                }, _callee3, _this, [[3, 8]]);
+                                }, _callee3, _this, [[5, 10]]);
                             }));
 
                             return function (_x7) {
@@ -228,7 +308,7 @@ var login = exports.login = function () {
                             };
                         }())(ctx, next));
 
-                    case 2:
+                    case 8:
                     case 'end':
                         return _context4.stop();
                 }
@@ -498,49 +578,62 @@ var resetPassword = exports.resetPassword = function () {
                         debug(ctx.request.body);
                         email = ctx.request.body.email;
 
-                        if (!email) {
-                            ctx.throw(400);
+                        if (check.checkEmptyEmail(ctx, email)) {
+                            _context8.next = 4;
+                            break;
                         }
+
+                        return _context8.abrupt('return');
+
+                    case 4:
+                        if (check.checkValidEmail(ctx, email)) {
+                            _context8.next = 6;
+                            break;
+                        }
+
+                        return _context8.abrupt('return');
+
+                    case 6:
 
                         // get user
                         user = null;
-                        _context8.prev = 4;
-                        _context8.next = 7;
+                        _context8.prev = 7;
+                        _context8.next = 10;
                         return _user2.default.findOne({ email: email });
 
-                    case 7:
+                    case 10:
                         user = _context8.sent;
-                        _context8.next = 13;
+                        _context8.next = 16;
                         break;
 
-                    case 10:
-                        _context8.prev = 10;
-                        _context8.t0 = _context8['catch'](4);
-
-                        ctx.throw(500, _context8.t0.message);
-
                     case 13:
+                        _context8.prev = 13;
+                        _context8.t0 = _context8['catch'](7);
+
+                        ctx.throw(500);
+
+                    case 16:
                         if (!user) {
-                            ctx.throw(422, 'user is not existed');
+                            check.emailIsNotExisted(ctx);
                         }
 
                         // save setPwdToken
                         token = new _setPwdToken2.default({ userid: user.id });
-                        _context8.prev = 15;
-                        _context8.next = 18;
+                        _context8.prev = 18;
+                        _context8.next = 21;
                         return token.save();
 
-                    case 18:
-                        _context8.next = 23;
+                    case 21:
+                        _context8.next = 26;
                         break;
 
-                    case 20:
-                        _context8.prev = 20;
-                        _context8.t1 = _context8['catch'](15);
-
-                        ctx.throw(500, _context8.t1.message);
-
                     case 23:
+                        _context8.prev = 23;
+                        _context8.t1 = _context8['catch'](18);
+
+                        ctx.throw(500);
+
+                    case 26:
 
                         // send mail
                         text = 'set your password from: ';
@@ -552,21 +645,21 @@ var resetPassword = exports.resetPassword = function () {
                             subject: 'Reset your password of greedpatch', // Subject line
                             text: text // plaintext body
                         };
-                        _context8.next = 28;
+                        _context8.next = 31;
                         return mail.send(content);
 
-                    case 28:
+                    case 31:
 
                         ctx.body = {
                             message: 'Please set password from email'
                         };
 
-                    case 29:
+                    case 32:
                     case 'end':
                         return _context8.stop();
                 }
             }
-        }, _callee8, this, [[4, 10], [15, 20]]);
+        }, _callee8, this, [[7, 13], [18, 23]]);
     }));
 
     return function resetPassword(_x14, _x15) {
@@ -955,6 +1048,10 @@ var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
 
+var _check = require('../tools/check');
+
+var check = _interopRequireWildcard(_check);
+
 var _config = require('../config');
 
 var _config2 = _interopRequireDefault(_config);
@@ -971,9 +1068,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- * Created by Bell on 16/8/10.
- */
-
-var debug = new _debug2.default(_package2.default.name);
+var debug = new _debug2.default(_package2.default.name); /**
+                                                          * Created by Bell on 16/8/10.
+                                                          */
 //# sourceMappingURL=user.js.map
