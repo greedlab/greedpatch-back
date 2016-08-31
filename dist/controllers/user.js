@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.updateStatus = exports.updatePassword = exports.setMyPassword = exports.resetPassword = exports.myProfile = exports.modifyMyPassword = exports.logout = exports.login = exports.register = exports.list = undefined;
+exports.updateStatus = exports.updatePassword = exports.setPassword = exports.resetPassword = exports.myProfile = exports.modifyMyPassword = exports.logout = exports.login = exports.register = exports.list = undefined;
 
 var _bluebird = require('bluebird');
 
@@ -264,7 +264,7 @@ var login = exports.login = function () {
                                                     break;
                                                 }
 
-                                                check.authenticationFailed(ctx);
+                                                response_util.authenticationFailed(ctx);
                                                 return _context3.abrupt('return');
 
                                             case 3:
@@ -463,7 +463,7 @@ var modifyMyPassword = exports.modifyMyPassword = function () {
                         _context6.prev = 29;
                         _context6.t1 = _context6['catch'](24);
 
-                        ctx.throw(500, _context6.t1.message);
+                        ctx.throw(500);
 
                     case 32:
                         _context6.prev = 32;
@@ -479,7 +479,7 @@ var modifyMyPassword = exports.modifyMyPassword = function () {
                         _context6.prev = 38;
                         _context6.t2 = _context6['catch'](32);
 
-                        ctx.throw(500, _context6.t2.message);
+                        ctx.throw(500);
 
                     case 41:
                         response = user.toJSON();
@@ -614,7 +614,7 @@ var resetPassword = exports.resetPassword = function () {
 
                     case 16:
                         if (!user) {
-                            check.emailIsNotExisted(ctx);
+                            response_util.emailNotExist(ctx);
                         }
 
                         // save setPwdToken
@@ -645,16 +645,18 @@ var resetPassword = exports.resetPassword = function () {
                             subject: 'Reset your password of greedpatch', // Subject line
                             text: text // plaintext body
                         };
-                        _context8.next = 31;
+
+                        debug(content);
+                        _context8.next = 32;
                         return mail.send(content);
 
-                    case 31:
+                    case 32:
 
                         ctx.body = {
                             message: 'Please set password from email'
                         };
 
-                    case 32:
+                    case 33:
                     case 'end':
                         return _context8.stop();
                 }
@@ -668,15 +670,15 @@ var resetPassword = exports.resetPassword = function () {
 }();
 
 /**
- * set my password
+ * set password
  *
- * @example curl -X POST -d '{token: "token", password: "password"}' localhost:4002/set-my-password
+ * @example curl -X POST -d '{token: "token", password: "password"}' localhost:4002/set-password
  * @param ctx
  * @param next
  */
 
 
-var setMyPassword = exports.setMyPassword = function () {
+var setPassword = exports.setPassword = function () {
     var _ref9 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee9(ctx, next) {
         var token_id, password, setPwdToken, user, payload, token, response;
         return regeneratorRuntime.wrap(function _callee9$(_context9) {
@@ -685,103 +687,146 @@ var setMyPassword = exports.setMyPassword = function () {
                     case 0:
                         token_id = ctx.request.body.token;
 
-                        if (!token_id) {
-                            ctx.throw(400, 'token is empty');
+                        if (check.checkEmptySetPwdToken(ctx, token_id)) {
+                            _context9.next = 3;
+                            break;
                         }
 
+                        return _context9.abrupt('return');
+
+                    case 3:
                         password = ctx.request.body.password;
 
-                        if (!password) {
-                            ctx.throw(400, 'password is empty');
+                        if (check.checkEmptyPassword(ctx, password)) {
+                            _context9.next = 6;
+                            break;
                         }
+
+                        return _context9.abrupt('return');
+
+                    case 6:
+                        if (check.checkValidPassword(ctx, password)) {
+                            _context9.next = 8;
+                            break;
+                        }
+
+                        return _context9.abrupt('return');
+
+                    case 8:
 
                         // valid setPwdToken
                         setPwdToken = null;
-                        _context9.prev = 5;
-                        _context9.next = 8;
+                        _context9.prev = 9;
+                        _context9.next = 12;
                         return _setPwdToken2.default.findOne({ _id: token_id, status: 0 });
 
-                    case 8:
+                    case 12:
                         setPwdToken = _context9.sent;
-                        _context9.next = 14;
+                        _context9.next = 18;
                         break;
 
-                    case 11:
-                        _context9.prev = 11;
-                        _context9.t0 = _context9['catch'](5);
+                    case 15:
+                        _context9.prev = 15;
+                        _context9.t0 = _context9['catch'](9);
 
-                        ctx.throw(500, _context9.t0.message);
+                        ctx.throw(500);
 
-                    case 14:
-                        if (!setPwdToken) {
-                            ctx.throw(422, 'unvalid token');
+                    case 18:
+                        if (setPwdToken) {
+                            _context9.next = 21;
+                            break;
                         }
+
+                        response_util.setPwdTokenNotExist(ctx);
+                        return _context9.abrupt('return');
+
+                    case 21:
 
                         // get user
                         user = null;
-                        _context9.prev = 16;
-                        _context9.next = 19;
+                        _context9.prev = 22;
+                        _context9.next = 25;
                         return _user2.default.findById(setPwdToken.userid);
 
-                    case 19:
-                        user = _context9.sent;
-                        _context9.next = 25;
-                        break;
-
-                    case 22:
-                        _context9.prev = 22;
-                        _context9.t1 = _context9['catch'](16);
-
-                        ctx.throw(500, _context9.t1.message);
-
                     case 25:
-                        if (!user) {
-                            ctx.throw(422, 'unvalid token');
-                        }
-
-                        if (user.password === password) {
-                            ctx.throw(422, 'please don not use the same password');
-                        }
-
-                        // udpate password and token valid timestamp
-                        _context9.prev = 27;
-                        _context9.next = 30;
-                        return user.updatePassword(password);
-
-                    case 30:
-                        _context9.next = 32;
-                        return user_redis.setTimestamp(user.id, Date.now());
-
-                    case 32:
-                        _context9.next = 37;
+                        user = _context9.sent;
+                        _context9.next = 31;
                         break;
+
+                    case 28:
+                        _context9.prev = 28;
+                        _context9.t1 = _context9['catch'](22);
+
+                        ctx.throw(500);
+
+                    case 31:
+                        if (user) {
+                            _context9.next = 34;
+                            break;
+                        }
+
+                        response_util.userNotExist(ctx);
+                        return _context9.abrupt('return');
 
                     case 34:
-                        _context9.prev = 34;
-                        _context9.t2 = _context9['catch'](27);
+                        if (!(user.password != password)) {
+                            _context9.next = 45;
+                            break;
+                        }
 
-                        ctx.throw(500, _context9.t2.message);
+                        _context9.prev = 35;
+                        _context9.next = 38;
+                        return user.updatePassword(password);
 
-                    case 37:
+                    case 38:
+                        _context9.next = 40;
+                        return user_redis.setTimestamp(user.id, Date.now());
+
+                    case 40:
+                        _context9.next = 45;
+                        break;
+
+                    case 42:
+                        _context9.prev = 42;
+                        _context9.t2 = _context9['catch'](35);
+
+                        ctx.throw(500);
+
+                    case 45:
+                        _context9.prev = 45;
+                        _context9.next = 48;
+                        return setPwdToken.upate({ status: 1 });
+
+                    case 48:
+                        _context9.next = 53;
+                        break;
+
+                    case 50:
+                        _context9.prev = 50;
+                        _context9.t3 = _context9['catch'](45);
+
+                        ctx.throw(500);
+
+                    case 53:
 
                         // generate new token
                         payload = token_util.generatePayload(user.id);
                         token = token_util.generateTokenFromPayload(payload);
-                        _context9.prev = 39;
-                        _context9.next = 42;
+                        _context9.prev = 55;
+                        _context9.next = 58;
                         return token_redis.add(token, payload.exp);
 
-                    case 42:
-                        _context9.next = 47;
+                    case 58:
+                        _context9.next = 63;
                         break;
 
-                    case 44:
-                        _context9.prev = 44;
-                        _context9.t3 = _context9['catch'](39);
+                    case 60:
+                        _context9.prev = 60;
+                        _context9.t4 = _context9['catch'](55);
 
-                        ctx.throw(500, _context9.t3.message);
+                        ctx.throw(500);
 
-                    case 47:
+                    case 63:
                         response = user.toJSON();
 
                         delete response.password;
@@ -790,22 +835,15 @@ var setMyPassword = exports.setMyPassword = function () {
                             user: response
                         };
 
-                        if (!next) {
-                            _context9.next = 52;
-                            break;
-                        }
-
-                        return _context9.abrupt('return', next());
-
-                    case 52:
+                    case 66:
                     case 'end':
                         return _context9.stop();
                 }
             }
-        }, _callee9, this, [[5, 11], [16, 22], [27, 34], [39, 44]]);
+        }, _callee9, this, [[9, 15], [22, 28], [35, 42], [45, 50], [55, 60]]);
     }));
 
-    return function setMyPassword(_x16, _x17) {
+    return function setPassword(_x16, _x17) {
         return _ref9.apply(this, arguments);
     };
 }();
@@ -884,7 +922,7 @@ var updatePassword = exports.updatePassword = function () {
                         _context10.prev = 24;
                         _context10.t1 = _context10['catch'](17);
 
-                        ctx.throw(500, _context10.t1.message);
+                        ctx.throw(500);
 
                     case 27:
 
@@ -958,7 +996,7 @@ var updateStatus = exports.updateStatus = function () {
                         _context11.prev = 13;
                         _context11.t0 = _context11['catch'](7);
 
-                        ctx.throw(500, _context11.t0.message);
+                        ctx.throw(500);
 
                     case 16:
                         if (!user) {
@@ -978,7 +1016,7 @@ var updateStatus = exports.updateStatus = function () {
                         _context11.prev = 22;
                         _context11.t1 = _context11['catch'](17);
 
-                        ctx.throw(500, _context11.t1.message);
+                        ctx.throw(500);
 
                     case 25:
 
@@ -1012,22 +1050,6 @@ var _url = require('url');
 
 var _url2 = _interopRequireDefault(_url);
 
-var _encrypt = require('../utils/encrypt');
-
-var encrypt = _interopRequireWildcard(_encrypt);
-
-var _regex = require('../utils/regex');
-
-var regex = _interopRequireWildcard(_regex);
-
-var _token = require('../utils/token');
-
-var token_util = _interopRequireWildcard(_token);
-
-var _mail = require('../utils/mail');
-
-var mail = _interopRequireWildcard(_mail);
-
 var _user = require('../models/user');
 
 var _user2 = _interopRequireDefault(_user);
@@ -1036,13 +1058,33 @@ var _setPwdToken = require('../models/setPwdToken');
 
 var _setPwdToken2 = _interopRequireDefault(_setPwdToken);
 
-var _token2 = require('../redis/token');
+var _token = require('../redis/token');
 
-var token_redis = _interopRequireWildcard(_token2);
+var token_redis = _interopRequireWildcard(_token);
 
 var _user3 = require('../redis/user');
 
 var user_redis = _interopRequireWildcard(_user3);
+
+var _encrypt = require('../utils/encrypt');
+
+var encrypt = _interopRequireWildcard(_encrypt);
+
+var _regex = require('../utils/regex');
+
+var regex = _interopRequireWildcard(_regex);
+
+var _token2 = require('../utils/token');
+
+var token_util = _interopRequireWildcard(_token2);
+
+var _mail = require('../utils/mail');
+
+var mail = _interopRequireWildcard(_mail);
+
+var _response = require('../utils/response');
+
+var response_util = _interopRequireWildcard(_response);
 
 var _auth = require('../tools/auth');
 
@@ -1068,7 +1110,9 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var debug = new _debug2.default(_package2.default.name); /**
-                                                          * Created by Bell on 16/8/10.
-                                                          */
+/**
+ * Created by Bell on 16/8/10.
+ */
+
+var debug = new _debug2.default(_package2.default.name);
 //# sourceMappingURL=user.js.map

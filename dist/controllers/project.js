@@ -16,44 +16,65 @@ var _bluebird = require('bluebird');
  */
 var add = exports.add = function () {
     var _ref = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee(ctx, next) {
-        var bundle_id, name, user, project, response;
+        var name, user, project_object, project, response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
                 switch (_context.prev = _context.next) {
                     case 0:
-                        debug(ctx.request.body);
-                        bundle_id = ctx.request.body.bundle_id;
-
-                        if (!bundle_id) {
-                            ctx.throw(400, 'bundle_id can not be empty');
-                        }
-
                         name = ctx.request.body.name;
 
-                        if (!name) {
-                            ctx.throw(400, 'name can not be empty');
+                        if (check.checkEmptyProjectName(ctx, name)) {
+                            _context.next = 3;
+                            break;
                         }
 
+                        return _context.abrupt('return');
+
+                    case 3:
+                        user = null;
+                        _context.prev = 4;
                         _context.next = 7;
                         return auth.getUser(ctx);
 
                     case 7:
                         user = _context.sent;
+                        _context.next = 13;
+                        break;
 
+                    case 10:
+                        _context.prev = 10;
+                        _context.t0 = _context['catch'](4);
+
+                        ctx.throw(500);
+
+                    case 13:
                         if (!user) {
                             ctx.throw(401);
                         }
-                        project = new _project2.default(ctx.request.body);
 
-                        project.members = [{
+                        project_object = ctx.request.body;
+
+                        project_object.members = [{
                             id: user.id,
                             email: user.email,
                             role: 1
                         }];
-                        _context.next = 13;
+                        project = new _project2.default(project_object);
+                        _context.prev = 17;
+                        _context.next = 20;
                         return project.save();
 
-                    case 13:
+                    case 20:
+                        _context.next = 25;
+                        break;
+
+                    case 22:
+                        _context.prev = 22;
+                        _context.t1 = _context['catch'](17);
+
+                        ctx.throw(500);
+
+                    case 25:
 
                         // response
                         response = project.toJSON();
@@ -61,12 +82,12 @@ var add = exports.add = function () {
                         ctx.status = 201;
                         ctx.body = response;
 
-                    case 16:
+                    case 28:
                     case 'end':
                         return _context.stop();
                 }
             }
-        }, _callee, this);
+        }, _callee, this, [[4, 10], [17, 22]]);
     }));
 
     return function add(_x, _x2) {
@@ -91,36 +112,36 @@ var detail = exports.detail = function () {
                 switch (_context2.prev = _context2.next) {
                     case 0:
                         id = ctx.params.id;
-
-                        if (!id) {
-                            ctx.throw(400, 'id can not be empty');
-                        }
-
                         project = null;
-                        _context2.prev = 3;
-                        _context2.next = 6;
+                        _context2.prev = 2;
+                        _context2.next = 5;
                         return _project2.default.findById(id);
 
-                    case 6:
+                    case 5:
                         project = _context2.sent;
-                        _context2.next = 12;
+                        _context2.next = 11;
                         break;
 
-                    case 9:
-                        _context2.prev = 9;
-                        _context2.t0 = _context2['catch'](3);
+                    case 8:
+                        _context2.prev = 8;
+                        _context2.t0 = _context2['catch'](2);
 
                         ctx.throw(500, _context2.t0.message);
 
-                    case 12:
-                        if (!project) {
-                            ctx.throw(422, 'unvalid id');
+                    case 11:
+                        if (project) {
+                            _context2.next = 14;
+                            break;
                         }
 
-                        _context2.next = 15;
+                        response_util.projectNotExist(ctx);
+                        return _context2.abrupt('return');
+
+                    case 14:
+                        _context2.next = 16;
                         return auth.getUser(ctx);
 
-                    case 15:
+                    case 16:
                         user = _context2.sent;
 
                         if (!user) {
@@ -130,7 +151,7 @@ var detail = exports.detail = function () {
                         if (user.role != 1) {
                             // not manager
                             if (!project.isMember(user.id)) {
-                                ctx.throw(403, 'no permission');
+                                ctx.throw(403);
                             }
                         }
 
@@ -139,12 +160,12 @@ var detail = exports.detail = function () {
 
                         ctx.body = response;
 
-                    case 20:
+                    case 21:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[3, 9]]);
+        }, _callee2, this, [[2, 8]]);
     }));
 
     return function detail(_x3, _x4) {
@@ -260,7 +281,6 @@ var update = exports.update = function () {
             while (1) {
                 switch (_context4.prev = _context4.next) {
                     case 0:
-                        debug(ctx.request.body);
                         id = ctx.params.id;
 
                         if (!id) {
@@ -268,30 +288,30 @@ var update = exports.update = function () {
                         }
 
                         project = null;
-                        _context4.prev = 4;
-                        _context4.next = 7;
+                        _context4.prev = 3;
+                        _context4.next = 6;
                         return _project2.default.findById(id);
 
-                    case 7:
+                    case 6:
                         project = _context4.sent;
-                        _context4.next = 13;
+                        _context4.next = 12;
                         break;
 
-                    case 10:
-                        _context4.prev = 10;
-                        _context4.t0 = _context4['catch'](4);
+                    case 9:
+                        _context4.prev = 9;
+                        _context4.t0 = _context4['catch'](3);
 
                         ctx.throw(500, _context4.t0.message);
 
-                    case 13:
+                    case 12:
                         if (!project) {
                             ctx.throw(422, 'unvalid id');
                         }
 
-                        _context4.next = 16;
+                        _context4.next = 15;
                         return auth.getUser(ctx);
 
-                    case 16:
+                    case 15:
                         user = _context4.sent;
 
                         if (!user) {
@@ -315,31 +335,31 @@ var update = exports.update = function () {
                         if (introduction) {
                             object.introduction = introduction;
                         }
-                        _context4.prev = 24;
-                        _context4.next = 27;
+                        _context4.prev = 23;
+                        _context4.next = 26;
                         return project.update(object);
 
-                    case 27:
-                        _context4.next = 32;
+                    case 26:
+                        _context4.next = 31;
                         break;
 
-                    case 29:
-                        _context4.prev = 29;
-                        _context4.t1 = _context4['catch'](24);
+                    case 28:
+                        _context4.prev = 28;
+                        _context4.t1 = _context4['catch'](23);
 
                         ctx.throw(500, _context4.t1.message);
 
-                    case 32:
+                    case 31:
 
                         // response
                         ctx.status = 204;
 
-                    case 33:
+                    case 32:
                     case 'end':
                         return _context4.stop();
                 }
             }
-        }, _callee4, this, [[4, 10], [24, 29]]);
+        }, _callee4, this, [[3, 9], [23, 28]]);
     }));
 
     return function update(_x7, _x8) {
@@ -453,7 +473,7 @@ var listMy = exports.listMy = function () {
                         projects = projects || [];
 
                         // response
-                        ctx.body = projects;
+                        ctx.body = { projects: projects };
 
                     case 14:
                     case 'end':
@@ -792,6 +812,14 @@ var _user2 = _interopRequireDefault(_user);
 var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
+
+var _check = require('../tools/check');
+
+var check = _interopRequireWildcard(_check);
+
+var _response = require('../utils/response');
+
+var response_util = _interopRequireWildcard(_response);
 
 var _debug = require('debug');
 

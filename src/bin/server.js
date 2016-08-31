@@ -1,9 +1,10 @@
 
 import koa from 'koa';
-import logger from 'koa-logger';
+// import logger from 'koa-logger';
 import bodyParser from 'koa-bodyparser';
 import mongoose from 'mongoose';
 import passport from 'koa-passport';
+import koaBunyanLogger from 'koa-bunyan-logger';
 
 import config from '../config';
 import home from '../routes/home';
@@ -12,16 +13,33 @@ import token from '../routes/token';
 import project from '../routes/project';
 import patch from '../routes/patch';
 import permission from '../routes/permission';
+import pkg from '../../package.json';
 
 const app = new koa();
-
-// logger
-
-app.use(logger());
 
 // bodyParser
 
 app.use(bodyParser());
+
+// logger
+
+// app.use(logger());
+
+// koa-bunyan-logger
+
+app.use(koaBunyanLogger({
+    name: pkg.name,
+    level: 'debug'
+}));
+app.use(koaBunyanLogger.requestIdContext());
+app.use(koaBunyanLogger.requestLogger({
+    updateRequestLogFields: function (fields, err) {
+        fields.body = this.request.body;
+    },
+    updateResponseLogFields: function (fields, err) {
+        fields.body = this.response.body;
+    }
+}));
 
 // mongodb
 

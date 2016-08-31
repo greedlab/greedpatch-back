@@ -7,8 +7,9 @@ exports.checkEmptyEmail = checkEmptyEmail;
 exports.checkValidEmail = checkValidEmail;
 exports.checkEmptyPassword = checkEmptyPassword;
 exports.checkValidPassword = checkValidPassword;
-exports.authenticationFailed = authenticationFailed;
-exports.emailIsNotExisted = emailIsNotExisted;
+exports.checkEmptySetPwdToken = checkEmptySetPwdToken;
+exports.checkEmptyBundleId = checkEmptyBundleId;
+exports.checkEmptyProjectName = checkEmptyProjectName;
 
 var _regex = require('../utils/regex');
 
@@ -20,7 +21,7 @@ function checkEmptyEmail(ctx, email) {
     if (!email) {
         ctx.status = 422;
         ctx.body = {
-            message: 'Email not found',
+            message: 'email is empty',
             errors: [{
                 'resource': 'User',
                 'field': 'email',
@@ -54,7 +55,7 @@ function checkEmptyPassword(ctx, password) {
     if (!password) {
         ctx.status = 422;
         ctx.body = {
-            message: 'Password not found',
+            message: 'password is empty',
             errors: [{
                 'resource': 'User',
                 'field': 'password',
@@ -82,22 +83,51 @@ function checkValidPassword(ctx, password) {
     return true;
 }
 
-function authenticationFailed(ctx) {
-    ctx.status = 401;
-    ctx.body = {
-        message: 'Email or password error'
-    };
+function checkEmptySetPwdToken(ctx, token) {
+    if (!token) {
+        ctx.status = 422;
+        ctx.body = {
+            message: 'token is empty',
+            errors: [{
+                'resource': 'SetPwdToken',
+                'field': 'id',
+                'code': 'missing_field'
+            }]
+        };
+        return false;
+    }
+    return true;
 }
 
-function emailIsNotExisted(ctx) {
-    ctx.status = 422;
-    ctx.body = {
-        message: 'User is not existed',
-        errors: [{
-            'resource': 'User',
-            'field': 'email',
-            'code': 'missing_field'
-        }]
-    };
+function checkEmptyBundleId(ctx, bundle_id) {
+    if (!bundle_id) {
+        ctx.status = 422;
+        ctx.body = {
+            message: 'bundle_id is empty',
+            errors: [{
+                'resource': 'Project',
+                'field': 'bundle_id',
+                'code': 'missing_field'
+            }]
+        };
+        return false;
+    }
+    return true;
+}
+
+function checkEmptyProjectName(ctx, name) {
+    if (!name) {
+        ctx.status = 422;
+        ctx.body = {
+            message: 'name is empty',
+            errors: [{
+                'resource': 'Project',
+                'field': 'name',
+                'code': 'missing_field'
+            }]
+        };
+        return false;
+    }
+    return true;
 }
 //# sourceMappingURL=check.js.map

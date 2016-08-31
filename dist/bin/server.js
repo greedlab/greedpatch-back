@@ -4,10 +4,6 @@ var _koa = require('koa');
 
 var _koa2 = _interopRequireDefault(_koa);
 
-var _koaLogger = require('koa-logger');
-
-var _koaLogger2 = _interopRequireDefault(_koaLogger);
-
 var _koaBodyparser = require('koa-bodyparser');
 
 var _koaBodyparser2 = _interopRequireDefault(_koaBodyparser);
@@ -19,6 +15,10 @@ var _mongoose2 = _interopRequireDefault(_mongoose);
 var _koaPassport = require('koa-passport');
 
 var _koaPassport2 = _interopRequireDefault(_koaPassport);
+
+var _koaBunyanLogger = require('koa-bunyan-logger');
+
+var _koaBunyanLogger2 = _interopRequireDefault(_koaBunyanLogger);
 
 var _config = require('../config');
 
@@ -48,17 +48,38 @@ var _permission = require('../routes/permission');
 
 var _permission2 = _interopRequireDefault(_permission);
 
+var _package = require('../../package.json');
+
+var _package2 = _interopRequireDefault(_package);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// import logger from 'koa-logger';
 var app = new _koa2.default();
-
-// logger
-
-app.use((0, _koaLogger2.default)());
 
 // bodyParser
 
 app.use((0, _koaBodyparser2.default)());
+
+// logger
+
+// app.use(logger());
+
+// koa-bunyan-logger
+
+app.use((0, _koaBunyanLogger2.default)({
+    name: _package2.default.name,
+    level: 'debug'
+}));
+app.use(_koaBunyanLogger2.default.requestIdContext());
+app.use(_koaBunyanLogger2.default.requestLogger({
+    updateRequestLogFields: function updateRequestLogFields(fields, err) {
+        fields.body = this.request.body;
+    },
+    updateResponseLogFields: function updateResponseLogFields(fields, err) {
+        fields.body = this.response.body;
+    }
+}));
 
 // mongodb
 

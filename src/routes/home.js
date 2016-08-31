@@ -18,7 +18,7 @@ router
     .post('/logout', auth.ensureUser, user.logout)
     .post('/modify-my-password', auth.ensureUser, user.modifyMyPassword)
     .post('/reset-password', user.resetPassword)
-    .post('/set-my-password', user.setMyPassword);
+    .post('/set-password', user.setPassword);
 
 export default {
     base_url,

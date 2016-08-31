@@ -5,6 +5,9 @@
 import Project from '../models/project';
 import User from '../models/user';
 import * as auth from '../tools/auth';
+import * as check from '../tools/check';
+import *as response_util from '../utils/response';
+
 import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
@@ -17,30 +20,35 @@ const debug = new Debug(pkg.name);
  * @returns {*}
  */
 export async function add(ctx, next) {
-    debug(ctx.request.body);
-    const bundle_id = ctx.request.body.bundle_id;
-    if (!bundle_id) {
-        ctx.throw(400, 'bundle_id can not be empty');
-    }
-
     const name = ctx.request.body.name;
-    if (!name) {
-        ctx.throw(400, 'name can not be empty');
+    if (!check.checkEmptyProjectName(ctx, name)) {
+        return;
     }
 
-    const user = await auth.getUser(ctx);
+    let user = null;
+    try {
+        user = await auth.getUser(ctx);
+    } catch (err) {
+        ctx.throw(500);
+    }
     if (!user) {
         ctx.throw(401);
     }
-    const project = new Project(ctx.request.body);
-    project.members = [
+
+    let project_object = ctx.request.body;
+    project_object.members = [
         {
             id: user.id,
             email: user.email,
             role: 1
         }
     ];
-    await project.save();
+    const project = new Project(project_object);
+    try {
+        await project.save();
+    } catch (err) {
+        ctx.throw(500);
+    }
 
     // response
     const response = project.toJSON();
@@ -57,18 +65,15 @@ export async function add(ctx, next) {
  */
 export async function detail(ctx, next) {
     const id = ctx.params.id;
-    if (!id) {
-        ctx.throw(400, 'id can not be empty');
-    }
-
     let project = null;
     try {
         project = await Project.findById(id);
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     if (!project) {
-        ctx.throw(422, 'unvalid id');
+        response_util.projectNotExist(ctx);
+        return;
     }
 
     const user = await auth.getUser(ctx);
@@ -78,7 +83,7 @@ export async function detail(ctx, next) {
 
     if (user.role != 1) { // not manager
         if (!project.isMember(user.id)) {
-            ctx.throw(403, 'no permission');
+            ctx.throw(403);
         }
     }
 
@@ -104,7 +109,7 @@ export async function del(ctx, next) {
     try {
         project = await Project.findById(id);
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     if (!project) {
         ctx.throw(422, 'unvalid id');
@@ -124,7 +129,7 @@ export async function del(ctx, next) {
     try {
         await project.remove();
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
 
     // response
@@ -139,7 +144,6 @@ export async function del(ctx, next) {
  * @returns {*}
  */
 export async function update(ctx, next) {
-    debug(ctx.request.body);
     const id = ctx.params.id;
     if (!id) {
         ctx.throw(400, 'id can not be empty');
@@ -149,7 +153,7 @@ export async function update(ctx, next) {
     try {
         project = await Project.findById(id);
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     if (!project) {
         ctx.throw(422, 'unvalid id');
@@ -178,7 +182,7 @@ export async function update(ctx, next) {
     try {
         await project.update(object);
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
 
     // response
@@ -205,7 +209,7 @@ export async function listAll(ctx, next) {
     try {
         projects = await Project.find().lean();
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     projects = projects || [];
 
@@ -230,12 +234,12 @@ export async function listMy(ctx, next) {
     try {
         projects = await Project.find({'members.id': userid}).lean();
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     projects = projects || [];
 
     // response
-    ctx.body = projects;
+    ctx.body = {projects};
 }
 
 /**
@@ -260,7 +264,7 @@ export async function addMember(ctx, next) {
     try {
         project = await Project.findById(project_id);
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     if (!project) {
         ctx.throw(422, 'project is not existed');
@@ -280,7 +284,7 @@ export async function addMember(ctx, next) {
     try {
         add_user = await User.findOne({email});
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     if (!add_user) {
         ctx.throw(422, 'user is not existed');
@@ -299,7 +303,7 @@ export async function addMember(ctx, next) {
     try {
         await project.update({$set: {members}});
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     // response
     ctx.status = 204;
@@ -321,7 +325,7 @@ export async function listMembers(ctx, next) {
     try {
         project = await Project.findById(project_id);
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     if (!project) {
         ctx.throw(422, 'project is not existed');
@@ -366,13 +370,13 @@ export async function delMember(ctx, next) {
     try {
         project = await Project.findById(project_id);
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
     if (!project) {
         ctx.throw(422, 'project is not existed');
     }
 
-    let user = await auth.getUser(ctx);
+    const user = await auth.getUser(ctx);
     if (!user) {
         ctx.throw(401);
     }
@@ -397,7 +401,7 @@ export async function delMember(ctx, next) {
     try {
         await project.update({$set: {members}});
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500, err.message);
     }
 
     ctx.status = 204;

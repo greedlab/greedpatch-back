@@ -15,7 +15,7 @@ _mongoose2.default.Promise = global.Promise; /**
                                               */
 
 var Project = new _mongoose2.default.Schema({
-    bundle_id: { type: String, required: true, unique: true },
+    bundle_id: { type: String },
     name: { type: String, required: true },
     introduction: { type: String },
     members: { type: Array }

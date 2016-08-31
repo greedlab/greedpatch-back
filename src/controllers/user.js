@@ -4,14 +4,15 @@
 
 import passport from 'koa-passport';
 import url from 'url';
-import * as encrypt from '../utils/encrypt';
-import * as regex from '../utils/regex';
-import * as token_util from '../utils/token';
-import * as mail from '../utils/mail';
 import User from '../models/user';
 import SetPwdToken from '../models/setPwdToken';
 import * as token_redis from '../redis/token';
 import * as user_redis from '../redis/user';
+import * as encrypt from '../utils/encrypt';
+import * as regex from '../utils/regex';
+import * as token_util from '../utils/token';
+import * as mail from '../utils/mail';
+import * as response_util from '../utils/response';
 import * as auth from '../tools/auth';
 import * as check from '../tools/check';
 import config from '../config';
@@ -141,7 +142,7 @@ export async function login(ctx, next) {
     };
     return passport.authenticate('local', options, async(user) => {
         if (!user) {
-            check.authenticationFailed(ctx);
+            response_util.authenticationFailed(ctx);
             return;
         }
 
@@ -232,7 +233,7 @@ export async function modifyMyPassword(ctx, next) {
     try {
         await token_redis.add(token, payload.exp);
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
 
     // delete old token
@@ -240,7 +241,7 @@ export async function modifyMyPassword(ctx, next) {
         const old_token = auth.getToken(ctx);
         await token_redis.del(old_token);
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
 
     const response = user.toJSON();
@@ -298,7 +299,7 @@ export async function resetPassword(ctx, next) {
         ctx.throw(500);
     }
     if (!user) {
-        check.emailIsNotExisted(ctx);
+        response_util.emailNotExist(ctx);
     }
 
     // save setPwdToken
@@ -312,12 +313,13 @@ export async function resetPassword(ctx, next) {
     // send mail
     let text = 'set your password from: ';
     text += url.resolve(config.frontAddress, '/set-password/' + token.id);
-    var content = {
+    const content = {
         from: config.mailFrom, // sender address
         to: email, // list of receivers
         subject: 'Reset your password of greedpatch', // Subject line
         text: text // plaintext body
     };
+    debug(content);
     await mail.send(content);
 
     ctx.body = {
@@ -326,21 +328,25 @@ export async function resetPassword(ctx, next) {
 }
 
 /**
- * set my password
+ * set password
  *
- * @example curl -X POST -d '{token: "token", password: "password"}' localhost:4002/set-my-password
+ * @example curl -X POST -d '{token: "token", password: "password"}' localhost:4002/set-password
  * @param ctx
  * @param next
  */
-export async function setMyPassword(ctx, next) {
+export async function setPassword(ctx, next) {
     const token_id = ctx.request.body.token;
-    if (!token_id) {
-        ctx.throw(400, 'token is empty');
+
+    if (!check.checkEmptySetPwdToken(ctx, token_id)) {
+        return;
     }
 
     const password = ctx.request.body.password;
-    if (!password) {
-        ctx.throw(400, 'password is empty');
+    if (!check.checkEmptyPassword(ctx, password)) {
+        return;
+    }
+    if (!check.checkValidPassword(ctx, password)) {
+        return;
     }
 
     // valid setPwdToken
@@ -348,10 +354,11 @@ export async function setMyPassword(ctx, next) {
     try {
         setPwdToken = await SetPwdToken.findOne({_id: token_id, status: 0});
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
     if (!setPwdToken) {
-        ctx.throw(422, 'unvalid token');
+        response_util.setPwdTokenNotExist(ctx);
+        return;
     }
 
     // get user
@@ -359,22 +366,28 @@ export async function setMyPassword(ctx, next) {
     try {
         user = await User.findById(setPwdToken.userid);
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
     if (!user) {
-        ctx.throw(422, 'unvalid token');
-    }
-
-    if (user.password === password) {
-        ctx.throw(422, 'please don not use the same password');
+        response_util.userNotExist(ctx);
+        return;
     }
 
     // udpate password and token valid timestamp
+    if (user.password != password) {
+        try {
+            await user.updatePassword(password);
+            await user_redis.setTimestamp(user.id, Date.now());
+        } catch (err) {
+            ctx.throw(500);
+        }
+    }
+
+    // set setPwdToken invalid
     try {
-        await user.updatePassword(password);
-        await user_redis.setTimestamp(user.id, Date.now());
+        await setPwdToken.upate({status: 1});
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
 
     // generate new token
@@ -383,7 +396,7 @@ export async function setMyPassword(ctx, next) {
     try {
         await token_redis.add(token, payload.exp);
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
 
     const response = user.toJSON();
@@ -392,9 +405,6 @@ export async function setMyPassword(ctx, next) {
         token,
         user: response
     };
-    if (next) {
-        return next();
-    }
 }
 
 /**
@@ -438,9 +448,8 @@ export async function updatePassword(ctx, next) {
         await user.updatePassword(password);
         await user_redis.setTimestamp(user.id, Date.now());
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
-
 
     ctx.status = 204;
     if (next) {
@@ -476,7 +485,7 @@ export async function updateStatus(ctx, next) {
     try {
         user = await User.findById(userid, {password: 0, __v: 0});
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
     if (!user) {
         ctx.throw(422, 'user is not existed');
@@ -486,7 +495,7 @@ export async function updateStatus(ctx, next) {
     try {
         await user.update({$set: {status: status}});
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
 
     ctx.status = 204;

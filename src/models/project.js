@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 mongoose.Promise = global.Promise;
 
 const Project = new mongoose.Schema({
-    bundle_id: {type: String, required: true, unique: true},
+    bundle_id: {type: String},
     name: {type: String, required: true},
     introduction: {type: String},
     members: {type: Array}

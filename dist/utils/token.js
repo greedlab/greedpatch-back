@@ -28,39 +28,37 @@ function generateTokenFromPayload(payload) {
    * Created by Bell on 16/8/26.
    */
 
-;
-
 function generatePayload(id) {
     var iat = Date.now();
     var exp = iat + 30 * 24 * 60 * 60 * 1000;
     var scope = 'default';
     return { iat: iat, exp: exp, id: id, scope: scope };
-};
+}
 
 function generateToken(id) {
     return generateTokenFromPayload(generatePayload(id));
-};
+}
 
 function generateCheckPatchPayload(id) {
     var iat = Date.now();
     var scope = 'patch:check';
     return { iat: iat, id: id, scope: scope };
-};
+}
 
 function generateCheckPatchToken(id) {
     return generateTokenFromPayload(generateCheckPatchPayload(id));
-};
+}
 
 function generateSetPasswordPayload(id) {
     var iat = Date.now();
     var exp = iat + 24 * 60 * 60 * 1000;
     var scope = 'all';
     return { iat: iat, exp: exp, id: id, scope: scope };
-};
+}
 
 function generateSetPasswordToken(id) {
     return generateTokenFromPayload(generateSetPasswordPayload(id));
-};
+}
 
 /**
  * get payload from token
