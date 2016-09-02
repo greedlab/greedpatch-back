@@ -8,6 +8,13 @@ import * as token_redis from '../redis/token';
 import * as user_redis from '../redis/user';
 import * as token_util from '../utils/token';
 
+import Debug from 'debug';
+import pkg from '../../package.json';
+const debug = new Debug(pkg.name);
+
+const token_key = 'token';
+const role_key = 'role';
+
 /**
  * ensure user login successfully
  *
@@ -16,7 +23,14 @@ import * as token_util from '../utils/token';
  * @returns {*}
  */
 export async function ensureUser(ctx, next) {
-    const token = getToken(ctx);
+    let token = getToken(ctx);
+    if (!token) {
+        token = ctx.cookies.get(token_key);
+    }
+    return ensureUserWithToken(ctx, next, token);
+}
+
+export async function ensureUserWithToken(ctx, next, token) {
     if (!token) {
         ctx.throw(401);
     }

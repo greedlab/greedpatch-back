@@ -86,7 +86,7 @@ var register = exports.register = function () {
                     case 0:
                         email = ctx.request.body.email;
 
-                        if (check.checkEmptyEmail(ctx, email)) {
+                        if (check.checkUserEmpty(ctx, 'email', email)) {
                             _context2.next = 3;
                             break;
                         }
@@ -104,7 +104,7 @@ var register = exports.register = function () {
                     case 5:
                         password = ctx.request.body.password;
 
-                        if (check.checkEmptyPassword(ctx, password)) {
+                        if (check.checkUserEmpty(ctx, 'password', password)) {
                             _context2.next = 8;
                             break;
                         }
@@ -231,7 +231,7 @@ var login = exports.login = function () {
                     case 0:
                         email = ctx.request.body.email;
 
-                        if (check.checkEmptyEmail(ctx, email)) {
+                        if (check.checkUserEmpty(ctx, 'email', email)) {
                             _context4.next = 3;
                             break;
                         }
@@ -241,7 +241,7 @@ var login = exports.login = function () {
                     case 3:
                         password = ctx.request.body.password;
 
-                        if (check.checkEmptyPassword(ctx, password)) {
+                        if (check.checkUserEmpty(ctx, 'password', password)) {
                             _context4.next = 6;
                             break;
                         }
@@ -578,7 +578,7 @@ var resetPassword = exports.resetPassword = function () {
                         debug(ctx.request.body);
                         email = ctx.request.body.email;
 
-                        if (check.checkEmptyEmail(ctx, email)) {
+                        if (check.checkUserEmpty(ctx, 'email', email)) {
                             _context8.next = 4;
                             break;
                         }
@@ -638,9 +638,9 @@ var resetPassword = exports.resetPassword = function () {
                         // send mail
                         text = 'set your password from: ';
 
-                        text += _url2.default.resolve(_config2.default.frontAddress, '/set-password/' + token.id);
+                        text += _url2.default.resolve(_config2.default.front_address, '/set-password/' + token.id);
                         content = {
-                            from: _config2.default.mailFrom, // sender address
+                            from: _config2.default.mail_from, // sender address
                             to: email, // list of receivers
                             subject: 'Reset your password of greedpatch', // Subject line
                             text: text // plaintext body
@@ -687,7 +687,7 @@ var setPassword = exports.setPassword = function () {
                     case 0:
                         token_id = ctx.request.body.token;
 
-                        if (check.checkEmptySetPwdToken(ctx, token_id)) {
+                        if (check.checkSetPwdTokenEmpty(ctx, 'token_id', token_id)) {
                             _context9.next = 3;
                             break;
                         }
@@ -697,7 +697,7 @@ var setPassword = exports.setPassword = function () {
                     case 3:
                         password = ctx.request.body.password;
 
-                        if (check.checkEmptyPassword(ctx, password)) {
+                        if (check.checkUserEmpty(ctx, 'password', password)) {
                             _context9.next = 6;
                             break;
                         }

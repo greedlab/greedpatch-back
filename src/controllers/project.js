@@ -6,7 +6,7 @@ import Project from '../models/project';
 import User from '../models/user';
 import * as auth from '../tools/auth';
 import * as check from '../tools/check';
-import *as response_util from '../utils/response';
+import * as response_util from '../utils/response';
 
 import Debug from 'debug';
 import pkg from '../../package.json';
@@ -19,9 +19,9 @@ const debug = new Debug(pkg.name);
  * @param next
  * @returns {*}
  */
-export async function add(ctx, next) {
+export async function create(ctx, next) {
     const name = ctx.request.body.name;
-    if (!check.checkEmptyProjectName(ctx, name)) {
+    if (!check.checkProjectEmpty(ctx, 'name', name)) {
         return;
     }
 
@@ -101,9 +101,6 @@ export async function detail(ctx, next) {
  */
 export async function del(ctx, next) {
     const id = ctx.params.id;
-    if (!id) {
-        ctx.throw(400, 'id can not be empty');
-    }
 
     let project = null;
     try {
@@ -111,8 +108,8 @@ export async function del(ctx, next) {
     } catch (err) {
         ctx.throw(500, err.message);
     }
-    if (!project) {
-        ctx.throw(422, 'unvalid id');
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     const user = await auth.getUser(ctx);
@@ -145,9 +142,6 @@ export async function del(ctx, next) {
  */
 export async function update(ctx, next) {
     const id = ctx.params.id;
-    if (!id) {
-        ctx.throw(400, 'id can not be empty');
-    }
 
     let project = null;
     try {
@@ -155,8 +149,8 @@ export async function update(ctx, next) {
     } catch (err) {
         ctx.throw(500, err.message);
     }
-    if (!project) {
-        ctx.throw(422, 'unvalid id');
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     const user = await auth.getUser(ctx);
@@ -166,7 +160,7 @@ export async function update(ctx, next) {
 
     if (user.role != 1) {
         if (!project.isManager(user.id)) {
-            ctx.throw(403, 'no permission');
+            ctx.throw(403);
         }
     }
 
@@ -182,7 +176,7 @@ export async function update(ctx, next) {
     try {
         await project.update(object);
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
 
     // response
@@ -202,19 +196,18 @@ export async function listAll(ctx, next) {
     }
 
     if (user.role != 1) {
-        ctx.throw(403, 'no permission');
+        ctx.throw(403);
     }
 
     let projects = null;
     try {
         projects = await Project.find().lean();
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
-    projects = projects || [];
 
     // response
-    ctx.body = projects;
+    ctx.body = projects || [];
 }
 
 /**
@@ -234,12 +227,11 @@ export async function listMy(ctx, next) {
     try {
         projects = await Project.find({'members.id': userid}).lean();
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
-    projects = projects || [];
 
     // response
-    ctx.body = {projects};
+    ctx.body = projects || [];
 }
 
 /**

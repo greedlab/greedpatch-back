@@ -10,7 +10,7 @@ import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
 
 export async function send(content) {
-    const transporter = nodemailer.createTransport(config.mailConfig);
+    const transporter = nodemailer.createTransport(config.mail_config);
     const info = await transporter.sendMail(content);
     debug('Mail response: ' + info.response);
 }

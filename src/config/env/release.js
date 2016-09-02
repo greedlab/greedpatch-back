@@ -8,9 +8,10 @@ export default {
     redisOptions: {
 
     },
-    frontAddress: 'http://localhost:4001/',
+    back_address: 'http://localhost:4002/',
+    front_address: 'http://localhost:4001/',
 
-    mailConfig: {
+    mail_config: {
         host: 'md-hk-1.webhostbox.net',
         port: 465,
         secure: true, // use SSL
@@ -19,5 +20,5 @@ export default {
             pass: 'Envy_Mail_00'
         }
     },
-    mailFrom: 'greedpatch@greedlab.com'
+    mail_from: 'greedpatch@greedlab.com'
 };

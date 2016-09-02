@@ -57,7 +57,7 @@ export async function list(ctx, next) {
  */
 export async function register(ctx, next) {
     const email = ctx.request.body.email;
-    if (!check.checkEmptyEmail(ctx, email)) {
+    if (!check.checkUserEmpty(ctx, 'email', email)) {
         return;
     }
     if (!check.checkValidEmail(ctx, email)) {
@@ -65,7 +65,7 @@ export async function register(ctx, next) {
     }
 
     const password = ctx.request.body.password;
-    if (!check.checkEmptyPassword(ctx, password)) {
+    if (!check.checkUserEmpty(ctx, 'password', password)) {
         return;
     }
     if (!check.checkValidPassword(ctx, password)) {
@@ -128,12 +128,12 @@ export async function register(ctx, next) {
  */
 export async function login(ctx, next) {
     const email = ctx.request.body.email;
-    if (!check.checkEmptyEmail(ctx, email)) {
+    if (!check.checkUserEmpty(ctx, 'email', email)) {
         return;
     }
 
     const password = ctx.request.body.password;
-    if (!check.checkEmptyPassword(ctx, password)) {
+    if (!check.checkUserEmpty(ctx, 'password', password)) {
         return;
     }
 
@@ -284,7 +284,7 @@ export async function myProfile(ctx, next) {
 export async function resetPassword(ctx, next) {
     debug(ctx.request.body);
     const email = ctx.request.body.email;
-    if (!check.checkEmptyEmail(ctx, email)) {
+    if (!check.checkUserEmpty(ctx, 'email', email)) {
         return;
     }
     if (!check.checkValidEmail(ctx, email)) {
@@ -312,9 +312,9 @@ export async function resetPassword(ctx, next) {
 
     // send mail
     let text = 'set your password from: ';
-    text += url.resolve(config.frontAddress, '/set-password/' + token.id);
+    text += url.resolve(config.front_address, '/set-password/' + token.id);
     const content = {
-        from: config.mailFrom, // sender address
+        from: config.mail_from, // sender address
         to: email, // list of receivers
         subject: 'Reset your password of greedpatch', // Subject line
         text: text // plaintext body
@@ -337,12 +337,12 @@ export async function resetPassword(ctx, next) {
 export async function setPassword(ctx, next) {
     const token_id = ctx.request.body.token;
 
-    if (!check.checkEmptySetPwdToken(ctx, token_id)) {
+    if (!check.checkSetPwdTokenEmpty(ctx, 'token_id', token_id)) {
         return;
     }
 
     const password = ctx.request.body.password;
-    if (!check.checkEmptyPassword(ctx, password)) {
+    if (!check.checkUserEmpty(ctx, 'password', password)) {
         return;
     }
     if (!check.checkValidPassword(ctx, password)) {

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.delMember = exports.listMembers = exports.addMember = exports.listMy = exports.listAll = exports.update = exports.del = exports.detail = exports.add = undefined;
+exports.delMember = exports.listMembers = exports.addMember = exports.listMy = exports.listAll = exports.update = exports.del = exports.detail = exports.create = undefined;
 
 var _bluebird = require('bluebird');
 
@@ -14,7 +14,7 @@ var _bluebird = require('bluebird');
  * @param next
  * @returns {*}
  */
-var add = exports.add = function () {
+var create = exports.create = function () {
     var _ref = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee(ctx, next) {
         var name, user, project_object, project, response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -23,7 +23,7 @@ var add = exports.add = function () {
                     case 0:
                         name = ctx.request.body.name;
 
-                        if (check.checkEmptyProjectName(ctx, name)) {
+                        if (check.checkProjectEmpty(ctx, 'name', name)) {
                             _context.next = 3;
                             break;
                         }
@@ -90,7 +90,7 @@ var add = exports.add = function () {
         }, _callee, this, [[4, 10], [17, 22]]);
     }));
 
-    return function add(_x, _x2) {
+    return function create(_x, _x2) {
         return _ref.apply(this, arguments);
     };
 }();
@@ -190,32 +190,31 @@ var del = exports.del = function () {
                 switch (_context3.prev = _context3.next) {
                     case 0:
                         id = ctx.params.id;
-
-                        if (!id) {
-                            ctx.throw(400, 'id can not be empty');
-                        }
-
                         project = null;
-                        _context3.prev = 3;
-                        _context3.next = 6;
+                        _context3.prev = 2;
+                        _context3.next = 5;
                         return _project2.default.findById(id);
 
-                    case 6:
+                    case 5:
                         project = _context3.sent;
-                        _context3.next = 12;
+                        _context3.next = 11;
                         break;
 
-                    case 9:
-                        _context3.prev = 9;
-                        _context3.t0 = _context3['catch'](3);
+                    case 8:
+                        _context3.prev = 8;
+                        _context3.t0 = _context3['catch'](2);
 
                         ctx.throw(500, _context3.t0.message);
 
-                    case 12:
-                        if (!project) {
-                            ctx.throw(422, 'unvalid id');
+                    case 11:
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
+                            _context3.next = 13;
+                            break;
                         }
 
+                        return _context3.abrupt('return');
+
+                    case 13:
                         _context3.next = 15;
                         return auth.getUser(ctx);
 
@@ -257,7 +256,7 @@ var del = exports.del = function () {
                         return _context3.stop();
                 }
             }
-        }, _callee3, this, [[3, 9], [18, 23]]);
+        }, _callee3, this, [[2, 8], [18, 23]]);
     }));
 
     return function del(_x5, _x6) {
@@ -282,32 +281,31 @@ var update = exports.update = function () {
                 switch (_context4.prev = _context4.next) {
                     case 0:
                         id = ctx.params.id;
-
-                        if (!id) {
-                            ctx.throw(400, 'id can not be empty');
-                        }
-
                         project = null;
-                        _context4.prev = 3;
-                        _context4.next = 6;
+                        _context4.prev = 2;
+                        _context4.next = 5;
                         return _project2.default.findById(id);
 
-                    case 6:
+                    case 5:
                         project = _context4.sent;
-                        _context4.next = 12;
+                        _context4.next = 11;
                         break;
 
-                    case 9:
-                        _context4.prev = 9;
-                        _context4.t0 = _context4['catch'](3);
+                    case 8:
+                        _context4.prev = 8;
+                        _context4.t0 = _context4['catch'](2);
 
                         ctx.throw(500, _context4.t0.message);
 
-                    case 12:
-                        if (!project) {
-                            ctx.throw(422, 'unvalid id');
+                    case 11:
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
+                            _context4.next = 13;
+                            break;
                         }
 
+                        return _context4.abrupt('return');
+
+                    case 13:
                         _context4.next = 15;
                         return auth.getUser(ctx);
 
@@ -320,7 +318,7 @@ var update = exports.update = function () {
 
                         if (user.role != 1) {
                             if (!project.isManager(user.id)) {
-                                ctx.throw(403, 'no permission');
+                                ctx.throw(403);
                             }
                         }
 
@@ -347,7 +345,7 @@ var update = exports.update = function () {
                         _context4.prev = 28;
                         _context4.t1 = _context4['catch'](23);
 
-                        ctx.throw(500, _context4.t1.message);
+                        ctx.throw(500);
 
                     case 31:
 
@@ -359,7 +357,7 @@ var update = exports.update = function () {
                         return _context4.stop();
                 }
             }
-        }, _callee4, this, [[3, 9], [23, 28]]);
+        }, _callee4, this, [[2, 8], [23, 28]]);
     }));
 
     return function update(_x7, _x8) {
@@ -393,7 +391,7 @@ var listAll = exports.listAll = function () {
                         }
 
                         if (user.role != 1) {
-                            ctx.throw(403, 'no permission');
+                            ctx.throw(403);
                         }
 
                         projects = null;
@@ -410,15 +408,14 @@ var listAll = exports.listAll = function () {
                         _context5.prev = 12;
                         _context5.t0 = _context5['catch'](6);
 
-                        ctx.throw(500, _context5.t0.message);
+                        ctx.throw(500);
 
                     case 15:
-                        projects = projects || [];
 
                         // response
-                        ctx.body = projects;
+                        ctx.body = projects || [];
 
-                    case 17:
+                    case 16:
                     case 'end':
                         return _context5.stop();
                 }
@@ -467,15 +464,14 @@ var listMy = exports.listMy = function () {
                         _context6.prev = 9;
                         _context6.t0 = _context6['catch'](3);
 
-                        ctx.throw(500, _context6.t0.message);
+                        ctx.throw(500);
 
                     case 12:
-                        projects = projects || [];
 
                         // response
-                        ctx.body = { projects: projects };
+                        ctx.body = projects || [];
 
-                    case 14:
+                    case 13:
                     case 'end':
                         return _context6.stop();
                 }

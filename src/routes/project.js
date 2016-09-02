@@ -12,7 +12,7 @@ let base_url = '/projects';
 let router = new Router({ prefix: base_url });
 
 router
-    .post('/', ensureUser, project.add)
+    .post('/', ensureUser, project.create)
     .post('/:id', ensureUser, project.update)
     .delete('/:id', ensureUser, project.del)
     .get('/', ensureUser, ensureManager, project.listAll)
@@ -21,7 +21,7 @@ router
     .post('/:project/members', ensureUser, project.addMember)
     .get('/:project/members', ensureUser, project.listMembers)
     .delete('/:project/members/:member', ensureUser, project.delMember)
-    .post('/:project/patches', ensureUser, patch.add)
+    .post('/:project/patches', ensureUser, patch.create)
     .get('/:project/patches', ensureUser, patch.list);
 
 export default {

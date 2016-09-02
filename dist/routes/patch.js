@@ -21,7 +21,7 @@ var Router = require('koa-router');
 var base_url = '/patches';
 var router = new Router({ prefix: base_url });
 
-router.post('/check', _auth.ensureUser, controller.check).get('/:id', _auth.ensureUser, controller.detail).delete('/:id', _auth.ensureUser, controller.del);
+router.post('/check', _auth.ensureUser, controller.checkPatch).get('/:id', _auth.ensureUser, controller.detail).delete('/:id', _auth.ensureUser, controller.del);
 
 exports.default = {
     base_url: base_url,

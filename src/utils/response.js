@@ -61,3 +61,17 @@ export function projectNotExist(ctx) {
         ]
     };
 }
+
+export function patchExisted(ctx) {
+    ctx.status = 422;
+    ctx.body = {
+        message: 'Patch is existed',
+        errors: [
+            {
+                'resource': 'Patch',
+                'code': 'already_exists'
+            }
+        ]
+    };
+}
+

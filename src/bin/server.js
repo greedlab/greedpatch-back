@@ -5,14 +5,21 @@ import bodyParser from 'koa-bodyparser';
 import mongoose from 'mongoose';
 import passport from 'koa-passport';
 import koaBunyanLogger from 'koa-bunyan-logger';
+import serve from 'koa-static';
+import path from 'path';
+import cors from 'koa-cors';
 
 import config from '../config';
+
+// route
+
 import home from '../routes/home';
 import user from '../routes/user';
 import token from '../routes/token';
 import project from '../routes/project';
 import patch from '../routes/patch';
 import permission from '../routes/permission';
+import file from '../routes/file';
 import pkg from '../../package.json';
 
 const app = new koa();
@@ -20,6 +27,10 @@ const app = new koa();
 // bodyParser
 
 app.use(bodyParser());
+
+// static
+
+app.use(serve(path.join(__dirname,'../assets')));
 
 // logger
 
@@ -51,6 +62,10 @@ mongoose.connect(config.mongodb);
 require('../config/passport');
 app.use(passport.initialize());
 
+// cors
+
+app.use(cors({credentials: true}));
+
 // router
 
 app
@@ -65,7 +80,9 @@ app
     .use(patch.router.routes())
     .use(patch.router.allowedMethods())
     .use(permission.router.routes())
-    .use(permission.router.allowedMethods());
+    .use(permission.router.allowedMethods())
+    .use(file.router.routes())
+    .use(file.router.allowedMethods());
 
 // listen
 

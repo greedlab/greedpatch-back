@@ -8,8 +8,9 @@ export default {
     redisOptions: {
 
     },
-    frontAddress: 'http://localhost:4001/',
-    mailConfig: {
+    back_address: 'http://localhost:4002/',
+    front_address: 'http://localhost:4001/',
+    mail_config: {
         host: 'smtp.greedlab.com',
         port: 465,
         secure: true, // use SSL
@@ -18,5 +19,5 @@ export default {
             pass: 'password'
         }
     },
-    mailFrom: 'test@greedlab.com'
+    mail_from: 'test@greedlab.com'
 };

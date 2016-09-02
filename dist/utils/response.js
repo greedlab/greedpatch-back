@@ -8,6 +8,7 @@ exports.emailNotExist = emailNotExist;
 exports.userNotExist = userNotExist;
 exports.setPwdTokenNotExist = setPwdTokenNotExist;
 exports.projectNotExist = projectNotExist;
+exports.patchExisted = patchExisted;
 /**
  * Created by Bell on 16/8/31.
  */
@@ -60,6 +61,17 @@ function projectNotExist(ctx) {
         errors: [{
             'resource': 'Project',
             'code': 'missing'
+        }]
+    };
+}
+
+function patchExisted(ctx) {
+    ctx.status = 422;
+    ctx.body = {
+        message: 'Patch is existed',
+        errors: [{
+            'resource': 'Patch',
+            'code': 'already_exists'
         }]
     };
 }

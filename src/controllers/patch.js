@@ -4,15 +4,17 @@
 
 import Project from '../models/project';
 import Patch from '../models/patch';
+import * as response_util from '../utils/response';
 import * as auth from '../tools/auth';
+import * as check from '../tools/check';
 import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
 
 export async function detail(ctx, next) {
     const patch_id = ctx.params.id;
-    if (!patch_id) {
-        ctx.throw(400, 'id can not be empty');
+    if (!check.checkPatchEmpty(ctx, 'patch_id', patch_id)) {
+        return;
     }
 
     let patch = null;
@@ -21,8 +23,8 @@ export async function detail(ctx, next) {
     } catch (err) {
         ctx.throw(500);
     }
-    if (!patch) {
-        ctx.throw(404, 'patch is not existed');
+    if (!check.checkPatchResourceEmpty(ctx, patch)) {
+        return;
     }
 
     let project = null;
@@ -31,8 +33,8 @@ export async function detail(ctx, next) {
     } catch (err) {
         ctx.throw(500);
     }
-    if (!project) {
-        ctx.throw(422, 'project is not existed');
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     let user = await auth.getUser(ctx);
@@ -61,8 +63,8 @@ export async function del(ctx, next) {
     } catch (err) {
         ctx.throw(500);
     }
-    if (!patch) {
-        ctx.throw(404, 'patch is not existed');
+    if (!check.checkPatchResourceEmpty(ctx, patch)) {
+        return;
     }
 
     let project = null;
@@ -71,8 +73,8 @@ export async function del(ctx, next) {
     } catch (err) {
         ctx.throw(500);
     }
-    if (!project) {
-        ctx.throw(422, 'project is not existed');
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     let user = await auth.getUser(ctx);
@@ -94,17 +96,17 @@ export async function del(ctx, next) {
     ctx.status = 204;
 }
 
-export async function check(ctx, next) {
+export async function checkPatch(ctx, next) {
     debug(ctx.request.body);
 
     const project_id = ctx.request.body.project_id;
-    if (!project_id) {
-        ctx.throw(400, 'project_id can not be empty');
+    if (! check.checkPatchEmpty(ctx, 'project_id', project_id)) {
+        return;
     }
 
     const project_version = ctx.request.body.project_version;
-    if (!project_version) {
-        ctx.throw(400, 'project_version can not be empty');
+    if (! check.checkPatchEmpty(ctx, 'project_version', project_version)) {
+        return;
     }
 
     const patch_version = ctx.request.body.patch_version | 0;
@@ -115,8 +117,8 @@ export async function check(ctx, next) {
     } catch (err) {
         ctx.throw(500);
     }
-    if (!project) {
-        ctx.throw(422, 'project is not existed');
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     let patches = null;
@@ -141,9 +143,6 @@ export async function check(ctx, next) {
 
 export async function list(ctx, next) {
     const project_id = ctx.params.project;
-    if (!project_id) {
-        ctx.throw(400, 'project can not be empty');
-    }
 
     let project = null;
     try {
@@ -151,8 +150,8 @@ export async function list(ctx, next) {
     } catch (err) {
         ctx.throw(500);
     }
-    if (!project) {
-        ctx.throw(422, 'project is not existed');
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     let user = await auth.getUser(ctx);
@@ -179,32 +178,32 @@ export async function list(ctx, next) {
  * @param next
  * @returns {*}
  */
-export async function add(ctx, next) {
+export async function create(ctx, next) {
     const body = ctx.request.body;
     debug(body);
     const project_id = ctx.params.project;
-    if (!project_id) {
-        ctx.throw(400, 'project can not be empty');
+    if (!check.checkPatchEmpty(ctx, 'project_id', project_id)) {
+        return;
     }
 
     const project_version = body.project_version;
-    if (!project_version) {
-        ctx.throw(400, 'project_version can not be empty');
+    if (!check.checkPatchEmpty(ctx, 'project_version', project_version)) {
+        return;
     }
 
     const patch_version = body.patch_version;
-    if (!patch_version) {
-        ctx.throw(400, 'patch_version can not be empty');
+    if (!check.checkPatchEmpty(ctx, 'patch_version', patch_version)) {
+        return;
     }
 
     const hash = body.hash;
-    if (!hash) {
-        ctx.throw(400, 'hash can not be empty');
+    if (!check.checkPatchEmpty(ctx, 'hash', hash)) {
+        return;
     }
 
     const patch_url = body.patch_url;
-    if (!patch_url) {
-        ctx.throw(400, 'patch_url can not be empty');
+    if (!check.checkPatchEmpty(ctx, 'patch_url', patch_url)) {
+        return;
     }
 
     let project = null;
@@ -213,8 +212,9 @@ export async function add(ctx, next) {
     } catch (err) {
         ctx.throw(500, err);
     }
-    if (!project) {
-        ctx.throw(422, 'project is not existed');
+
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     let user = await auth.getUser(ctx);
@@ -238,10 +238,11 @@ export async function add(ctx, next) {
         ctx.throw(500,err);
     }
     if (existed) {
-        ctx.throw(422,'patch is existed');
+        response_util.patchExisted(ctx);
+        return;
     }
 
-    let patch_object = {
+    const patch_object = {
         project_id,
         project_version,
         patch_version,

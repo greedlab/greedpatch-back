@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.add = exports.list = exports.check = exports.del = exports.detail = undefined;
+exports.create = exports.list = exports.checkPatch = exports.del = exports.detail = undefined;
 
 var _bluebird = require('bluebird');
 
@@ -16,56 +16,68 @@ var detail = exports.detail = function () {
                     case 0:
                         patch_id = ctx.params.id;
 
-                        if (!patch_id) {
-                            ctx.throw(400, 'id can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'patch_id', patch_id)) {
+                            _context.next = 3;
+                            break;
                         }
 
+                        return _context.abrupt('return');
+
+                    case 3:
                         patch = null;
-                        _context.prev = 3;
-                        _context.next = 6;
+                        _context.prev = 4;
+                        _context.next = 7;
                         return _patch2.default.findById(patch_id);
 
-                    case 6:
+                    case 7:
                         patch = _context.sent;
-                        _context.next = 12;
+                        _context.next = 13;
                         break;
 
-                    case 9:
-                        _context.prev = 9;
-                        _context.t0 = _context['catch'](3);
+                    case 10:
+                        _context.prev = 10;
+                        _context.t0 = _context['catch'](4);
 
                         ctx.throw(500);
 
-                    case 12:
-                        if (!patch) {
-                            ctx.throw(404, 'patch is not existed');
+                    case 13:
+                        if (check.checkPatchResourceEmpty(ctx, patch)) {
+                            _context.next = 15;
+                            break;
                         }
 
+                        return _context.abrupt('return');
+
+                    case 15:
                         project = null;
-                        _context.prev = 14;
-                        _context.next = 17;
+                        _context.prev = 16;
+                        _context.next = 19;
                         return _project2.default.findById(patch.project_id);
 
-                    case 17:
+                    case 19:
                         project = _context.sent;
-                        _context.next = 23;
+                        _context.next = 25;
                         break;
 
-                    case 20:
-                        _context.prev = 20;
-                        _context.t1 = _context['catch'](14);
+                    case 22:
+                        _context.prev = 22;
+                        _context.t1 = _context['catch'](16);
 
                         ctx.throw(500);
 
-                    case 23:
-                        if (!project) {
-                            ctx.throw(422, 'project is not existed');
+                    case 25:
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
+                            _context.next = 27;
+                            break;
                         }
 
-                        _context.next = 26;
+                        return _context.abrupt('return');
+
+                    case 27:
+                        _context.next = 29;
                         return auth.getUser(ctx);
 
-                    case 26:
+                    case 29:
                         user = _context.sent;
 
                         if (!user) {
@@ -81,12 +93,12 @@ var detail = exports.detail = function () {
 
                         ctx.body = response;
 
-                    case 31:
+                    case 34:
                     case 'end':
                         return _context.stop();
                 }
             }
-        }, _callee, this, [[3, 9], [14, 20]]);
+        }, _callee, this, [[4, 10], [16, 22]]);
     }));
 
     return function detail(_x, _x2) {
@@ -124,35 +136,43 @@ var del = exports.del = function () {
                         ctx.throw(500);
 
                     case 12:
-                        if (!patch) {
-                            ctx.throw(404, 'patch is not existed');
+                        if (check.checkPatchResourceEmpty(ctx, patch)) {
+                            _context2.next = 14;
+                            break;
                         }
 
+                        return _context2.abrupt('return');
+
+                    case 14:
                         project = null;
-                        _context2.prev = 14;
-                        _context2.next = 17;
+                        _context2.prev = 15;
+                        _context2.next = 18;
                         return _project2.default.findById(patch.project_id);
 
-                    case 17:
+                    case 18:
                         project = _context2.sent;
-                        _context2.next = 23;
+                        _context2.next = 24;
                         break;
 
-                    case 20:
-                        _context2.prev = 20;
-                        _context2.t1 = _context2['catch'](14);
+                    case 21:
+                        _context2.prev = 21;
+                        _context2.t1 = _context2['catch'](15);
 
                         ctx.throw(500);
 
-                    case 23:
-                        if (!project) {
-                            ctx.throw(422, 'project is not existed');
+                    case 24:
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
+                            _context2.next = 26;
+                            break;
                         }
 
-                        _context2.next = 26;
-                        return auth.getUser(ctx);
+                        return _context2.abrupt('return');
 
                     case 26:
+                        _context2.next = 28;
+                        return auth.getUser(ctx);
+
+                    case 28:
                         user = _context2.sent;
 
                         if (!user) {
@@ -164,30 +184,30 @@ var del = exports.del = function () {
                             }
                         }
 
-                        _context2.prev = 29;
-                        _context2.next = 32;
+                        _context2.prev = 31;
+                        _context2.next = 34;
                         return patch.remove();
 
-                    case 32:
-                        _context2.next = 37;
+                    case 34:
+                        _context2.next = 39;
                         break;
 
-                    case 34:
-                        _context2.prev = 34;
-                        _context2.t2 = _context2['catch'](29);
+                    case 36:
+                        _context2.prev = 36;
+                        _context2.t2 = _context2['catch'](31);
 
                         ctx.throw(500);
 
-                    case 37:
+                    case 39:
 
                         ctx.status = 204;
 
-                    case 38:
+                    case 40:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[3, 9], [14, 20], [29, 34]]);
+        }, _callee2, this, [[3, 9], [15, 21], [31, 36]]);
     }));
 
     return function del(_x3, _x4) {
@@ -195,7 +215,7 @@ var del = exports.del = function () {
     };
 }();
 
-var check = exports.check = function () {
+var checkPatch = exports.checkPatch = function () {
     var _ref3 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee3(ctx, next) {
         var project_id, project_version, patch_version, project, patches, response;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
@@ -206,41 +226,53 @@ var check = exports.check = function () {
 
                         project_id = ctx.request.body.project_id;
 
-                        if (!project_id) {
-                            ctx.throw(400, 'project_id can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'project_id', project_id)) {
+                            _context3.next = 4;
+                            break;
                         }
 
+                        return _context3.abrupt('return');
+
+                    case 4:
                         project_version = ctx.request.body.project_version;
 
-                        if (!project_version) {
-                            ctx.throw(400, 'project_version can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'project_version', project_version)) {
+                            _context3.next = 7;
+                            break;
                         }
 
+                        return _context3.abrupt('return');
+
+                    case 7:
                         patch_version = ctx.request.body.patch_version | 0;
                         project = null;
-                        _context3.prev = 7;
-                        _context3.next = 10;
+                        _context3.prev = 9;
+                        _context3.next = 12;
                         return _project2.default.findById(project_id);
 
-                    case 10:
+                    case 12:
                         project = _context3.sent;
-                        _context3.next = 16;
+                        _context3.next = 18;
                         break;
 
-                    case 13:
-                        _context3.prev = 13;
-                        _context3.t0 = _context3['catch'](7);
+                    case 15:
+                        _context3.prev = 15;
+                        _context3.t0 = _context3['catch'](9);
 
                         ctx.throw(500);
 
-                    case 16:
-                        if (!project) {
-                            ctx.throw(422, 'project is not existed');
+                    case 18:
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
+                            _context3.next = 20;
+                            break;
                         }
 
+                        return _context3.abrupt('return');
+
+                    case 20:
                         patches = null;
-                        _context3.prev = 18;
-                        _context3.next = 21;
+                        _context3.prev = 21;
+                        _context3.next = 24;
                         return _patch2.default.find({
                             project_id: project.id,
                             project_version: project_version,
@@ -249,18 +281,18 @@ var check = exports.check = function () {
                             patch_version: -1
                         }).limit(1);
 
-                    case 21:
+                    case 24:
                         patches = _context3.sent;
-                        _context3.next = 27;
+                        _context3.next = 30;
                         break;
 
-                    case 24:
-                        _context3.prev = 24;
-                        _context3.t1 = _context3['catch'](18);
+                    case 27:
+                        _context3.prev = 27;
+                        _context3.t1 = _context3['catch'](21);
 
                         ctx.throw(500);
 
-                    case 27:
+                    case 30:
                         if (patches && patches.length > 0) {
                             response = patches[0].toJSON();
 
@@ -269,15 +301,15 @@ var check = exports.check = function () {
                             ctx.status = 204;
                         }
 
-                    case 28:
+                    case 31:
                     case 'end':
                         return _context3.stop();
                 }
             }
-        }, _callee3, this, [[7, 13], [18, 24]]);
+        }, _callee3, this, [[9, 15], [21, 27]]);
     }));
 
-    return function check(_x5, _x6) {
+    return function checkPatch(_x5, _x6) {
         return _ref3.apply(this, arguments);
     };
 }();
@@ -290,32 +322,31 @@ var list = exports.list = function () {
                 switch (_context4.prev = _context4.next) {
                     case 0:
                         project_id = ctx.params.project;
-
-                        if (!project_id) {
-                            ctx.throw(400, 'project can not be empty');
-                        }
-
                         project = null;
-                        _context4.prev = 3;
-                        _context4.next = 6;
+                        _context4.prev = 2;
+                        _context4.next = 5;
                         return _project2.default.findById(project_id);
 
-                    case 6:
+                    case 5:
                         project = _context4.sent;
-                        _context4.next = 12;
+                        _context4.next = 11;
                         break;
 
-                    case 9:
-                        _context4.prev = 9;
-                        _context4.t0 = _context4['catch'](3);
+                    case 8:
+                        _context4.prev = 8;
+                        _context4.t0 = _context4['catch'](2);
 
                         ctx.throw(500);
 
-                    case 12:
-                        if (!project) {
-                            ctx.throw(422, 'project is not existed');
+                    case 11:
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
+                            _context4.next = 13;
+                            break;
                         }
 
+                        return _context4.abrupt('return');
+
+                    case 13:
                         _context4.next = 15;
                         return auth.getUser(ctx);
 
@@ -347,7 +378,7 @@ var list = exports.list = function () {
                         return _context4.stop();
                 }
             }
-        }, _callee4, this, [[3, 9]]);
+        }, _callee4, this, [[2, 8]]);
     }));
 
     return function list(_x7, _x8) {
@@ -364,7 +395,7 @@ var list = exports.list = function () {
  */
 
 
-var add = exports.add = function () {
+var create = exports.create = function () {
     var _ref5 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee5(ctx, next) {
         var body, project_id, project_version, patch_version, hash, patch_url, project, user, existed, patch_object, patch, response;
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
@@ -376,59 +407,83 @@ var add = exports.add = function () {
                         debug(body);
                         project_id = ctx.params.project;
 
-                        if (!project_id) {
-                            ctx.throw(400, 'project can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'project_id', project_id)) {
+                            _context5.next = 5;
+                            break;
                         }
 
+                        return _context5.abrupt('return');
+
+                    case 5:
                         project_version = body.project_version;
 
-                        if (!project_version) {
-                            ctx.throw(400, 'project_version can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'project_version', project_version)) {
+                            _context5.next = 8;
+                            break;
                         }
 
+                        return _context5.abrupt('return');
+
+                    case 8:
                         patch_version = body.patch_version;
 
-                        if (!patch_version) {
-                            ctx.throw(400, 'patch_version can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'patch_version', patch_version)) {
+                            _context5.next = 11;
+                            break;
                         }
 
+                        return _context5.abrupt('return');
+
+                    case 11:
                         hash = body.hash;
 
-                        if (!hash) {
-                            ctx.throw(400, 'hash can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'hash', hash)) {
+                            _context5.next = 14;
+                            break;
                         }
 
+                        return _context5.abrupt('return');
+
+                    case 14:
                         patch_url = body.patch_url;
 
-                        if (!patch_url) {
-                            ctx.throw(400, 'patch_url can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'patch_url', patch_url)) {
+                            _context5.next = 17;
+                            break;
                         }
 
+                        return _context5.abrupt('return');
+
+                    case 17:
                         project = null;
-                        _context5.prev = 13;
-                        _context5.next = 16;
+                        _context5.prev = 18;
+                        _context5.next = 21;
                         return _project2.default.findById(project_id);
 
-                    case 16:
+                    case 21:
                         project = _context5.sent;
-                        _context5.next = 22;
+                        _context5.next = 27;
                         break;
 
-                    case 19:
-                        _context5.prev = 19;
-                        _context5.t0 = _context5['catch'](13);
+                    case 24:
+                        _context5.prev = 24;
+                        _context5.t0 = _context5['catch'](18);
 
                         ctx.throw(500, _context5.t0);
 
-                    case 22:
-                        if (!project) {
-                            ctx.throw(422, 'project is not existed');
+                    case 27:
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
+                            _context5.next = 29;
+                            break;
                         }
 
-                        _context5.next = 25;
+                        return _context5.abrupt('return');
+
+                    case 29:
+                        _context5.next = 31;
                         return auth.getUser(ctx);
 
-                    case 25:
+                    case 31:
                         user = _context5.sent;
 
                         if (!user) {
@@ -441,30 +496,35 @@ var add = exports.add = function () {
                         }
 
                         existed = true;
-                        _context5.prev = 29;
-                        _context5.next = 32;
+                        _context5.prev = 35;
+                        _context5.next = 38;
                         return _patch2.default.findOne({
                             project_id: project_id,
                             project_version: project_version,
                             patch_version: patch_version
                         });
 
-                    case 32:
+                    case 38:
                         existed = _context5.sent;
-                        _context5.next = 38;
+                        _context5.next = 44;
                         break;
 
-                    case 35:
-                        _context5.prev = 35;
-                        _context5.t1 = _context5['catch'](29);
+                    case 41:
+                        _context5.prev = 41;
+                        _context5.t1 = _context5['catch'](35);
 
                         ctx.throw(500, _context5.t1);
 
-                    case 38:
-                        if (existed) {
-                            ctx.throw(422, 'patch is existed');
+                    case 44:
+                        if (!existed) {
+                            _context5.next = 47;
+                            break;
                         }
 
+                        response_util.patchExisted(ctx);
+                        return _context5.abrupt('return');
+
+                    case 47:
                         patch_object = {
                             project_id: project_id,
                             project_version: project_version,
@@ -473,35 +533,35 @@ var add = exports.add = function () {
                             patch_url: patch_url
                         };
                         patch = new _patch2.default(patch_object);
-                        _context5.prev = 41;
-                        _context5.next = 44;
+                        _context5.prev = 49;
+                        _context5.next = 52;
                         return patch.save();
 
-                    case 44:
-                        _context5.next = 49;
+                    case 52:
+                        _context5.next = 57;
                         break;
 
-                    case 46:
-                        _context5.prev = 46;
-                        _context5.t2 = _context5['catch'](41);
+                    case 54:
+                        _context5.prev = 54;
+                        _context5.t2 = _context5['catch'](49);
 
                         ctx.throw(500, _context5.t2);
 
-                    case 49:
+                    case 57:
                         response = patch.toJSON();
 
                         ctx.status = 201;
                         ctx.body = response;
 
-                    case 52:
+                    case 60:
                     case 'end':
                         return _context5.stop();
                 }
             }
-        }, _callee5, this, [[13, 19], [29, 35], [41, 46]]);
+        }, _callee5, this, [[18, 24], [35, 41], [49, 54]]);
     }));
 
-    return function add(_x9, _x10) {
+    return function create(_x9, _x10) {
         return _ref5.apply(this, arguments);
     };
 }();
@@ -514,9 +574,17 @@ var _patch = require('../models/patch');
 
 var _patch2 = _interopRequireDefault(_patch);
 
+var _response = require('../utils/response');
+
+var response_util = _interopRequireWildcard(_response);
+
 var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
+
+var _check = require('../tools/check');
+
+var check = _interopRequireWildcard(_check);
 
 var _debug = require('debug');
 

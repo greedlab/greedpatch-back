@@ -14,6 +14,9 @@ npm install --save koa-router@next
 npm install --save koa-bodyparser@next
 npm install --save koa-logger@next
 npm install --save koa-convert
+npm install --save koa-multer
+npm install --save koa-static@next
+npm install --save koa-cors
 ```
 
 ## eslint

@@ -11,7 +11,7 @@ let base_url = '/patches';
 let router = new Router({ prefix: base_url });
 
 router
-    .post('/check', ensureUser, controller.check)
+    .post('/check', ensureUser, controller.checkPatch)
     .get('/:id', ensureUser, controller.detail)
     .delete('/:id', ensureUser, controller.del);
 

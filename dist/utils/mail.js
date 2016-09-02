@@ -14,7 +14,7 @@ var send = exports.send = function () {
             while (1) {
                 switch (_context.prev = _context.next) {
                     case 0:
-                        transporter = _nodemailer2.default.createTransport(_config2.default.mailConfig);
+                        transporter = _nodemailer2.default.createTransport(_config2.default.mail_config);
                         _context.next = 3;
                         return transporter.sendMail(content);
 

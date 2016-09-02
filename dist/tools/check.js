@@ -3,13 +3,17 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.checkEmptyEmail = checkEmptyEmail;
+exports.checkProjectEmpty = checkProjectEmpty;
+exports.checkPatchEmpty = checkPatchEmpty;
+exports.checkSetPwdTokenEmpty = checkSetPwdTokenEmpty;
+exports.checkUserEmpty = checkUserEmpty;
+exports.checkEmpty = checkEmpty;
+exports.checkUserResourceEmpty = checkUserResourceEmpty;
+exports.checkProjectResourceEmpty = checkProjectResourceEmpty;
+exports.checkPatchResourceEmpty = checkPatchResourceEmpty;
+exports.checkResourceEmpty = checkResourceEmpty;
 exports.checkValidEmail = checkValidEmail;
-exports.checkEmptyPassword = checkEmptyPassword;
 exports.checkValidPassword = checkValidPassword;
-exports.checkEmptySetPwdToken = checkEmptySetPwdToken;
-exports.checkEmptyBundleId = checkEmptyBundleId;
-exports.checkEmptyProjectName = checkEmptyProjectName;
 
 var _regex = require('../utils/regex');
 
@@ -17,23 +21,73 @@ var regex = _interopRequireWildcard(_regex);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-function checkEmptyEmail(ctx, email) {
-    if (!email) {
+// check field
+
+function checkProjectEmpty(ctx, field, value) {
+    return checkEmpty(ctx, 'Project', field, value);
+} /**
+   * Created by Bell on 16/8/30.
+   */
+
+function checkPatchEmpty(ctx, field, value) {
+    return checkEmpty(ctx, 'Patch', field, value);
+}
+
+function checkSetPwdTokenEmpty(ctx, field, value) {
+    return checkEmpty(ctx, 'SetPwdToken', field, value);
+}
+
+function checkUserEmpty(ctx, field, value) {
+    return checkEmpty(ctx, 'User', field, value);
+}
+
+function checkEmpty(ctx, resource, field, value) {
+    if (!value) {
         ctx.status = 422;
         ctx.body = {
-            message: 'email is empty',
+            message: field + ' is empty',
             errors: [{
-                'resource': 'User',
-                'field': 'email',
+                'resource': resource,
+                'field': field,
                 'code': 'missing_field'
+            }]
+        };
+        // ctx.throw(422);
+        return false;
+    }
+    return true;
+}
+
+// check resource
+
+function checkUserResourceEmpty(ctx, value) {
+    return checkResourceEmpty(ctx, 'User', value);
+}
+
+function checkProjectResourceEmpty(ctx, value) {
+    return checkResourceEmpty(ctx, 'Project', value);
+}
+
+function checkPatchResourceEmpty(ctx, value) {
+    return checkResourceEmpty(ctx, 'kPatch', value);
+}
+
+function checkResourceEmpty(ctx, resource, value) {
+    if (!value) {
+        ctx.status = 422;
+        ctx.body = {
+            message: resource + ' is not existed',
+            errors: [{
+                'resource': resource,
+                'code': 'missing'
             }]
         };
         return false;
     }
     return true;
-} /**
-   * Created by Bell on 16/8/30.
-   */
+}
+
+// check valid
 
 function checkValidEmail(ctx, email) {
     if (!regex.validEmail(email)) {
@@ -51,22 +105,6 @@ function checkValidEmail(ctx, email) {
     return true;
 }
 
-function checkEmptyPassword(ctx, password) {
-    if (!password) {
-        ctx.status = 422;
-        ctx.body = {
-            message: 'password is empty',
-            errors: [{
-                'resource': 'User',
-                'field': 'password',
-                'code': 'missing_field'
-            }]
-        };
-        return false;
-    }
-    return true;
-}
-
 function checkValidPassword(ctx, password) {
     if (!regex.validPassword(password)) {
         ctx.status = 422;
@@ -76,54 +114,6 @@ function checkValidPassword(ctx, password) {
                 resource: 'User',
                 field: 'password',
                 code: 'invalid'
-            }]
-        };
-        return false;
-    }
-    return true;
-}
-
-function checkEmptySetPwdToken(ctx, token) {
-    if (!token) {
-        ctx.status = 422;
-        ctx.body = {
-            message: 'token is empty',
-            errors: [{
-                'resource': 'SetPwdToken',
-                'field': 'id',
-                'code': 'missing_field'
-            }]
-        };
-        return false;
-    }
-    return true;
-}
-
-function checkEmptyBundleId(ctx, bundle_id) {
-    if (!bundle_id) {
-        ctx.status = 422;
-        ctx.body = {
-            message: 'bundle_id is empty',
-            errors: [{
-                'resource': 'Project',
-                'field': 'bundle_id',
-                'code': 'missing_field'
-            }]
-        };
-        return false;
-    }
-    return true;
-}
-
-function checkEmptyProjectName(ctx, name) {
-    if (!name) {
-        ctx.status = 422;
-        ctx.body = {
-            message: 'name is empty',
-            errors: [{
-                'resource': 'Project',
-                'field': 'name',
-                'code': 'missing_field'
             }]
         };
         return false;

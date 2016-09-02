@@ -4,15 +4,33 @@
 
 import * as regex from '../utils/regex';
 
-export function checkEmptyEmail(ctx, email) {
-    if (!email) {
+// check field
+
+export function checkProjectEmpty(ctx, field, value) {
+    return checkEmpty(ctx, 'Project', field, value);
+}
+
+export function checkPatchEmpty(ctx, field, value) {
+    return checkEmpty(ctx, 'Patch', field, value);
+}
+
+export function checkSetPwdTokenEmpty(ctx, field, value) {
+    return checkEmpty(ctx, 'SetPwdToken', field, value);
+}
+
+export function checkUserEmpty(ctx, field, value) {
+    return checkEmpty(ctx, 'User', field, value);
+}
+
+export function checkEmpty(ctx, resource, field, value) {
+    if (!value) {
         ctx.status = 422;
         ctx.body = {
-            message: 'email is empty',
+            message: field + ' is empty',
             errors: [
                 {
-                    'resource': 'User',
-                    'field': 'email',
+                    'resource': resource,
+                    'field': field,
                     'code': 'missing_field'
                 }
             ]
@@ -21,6 +39,39 @@ export function checkEmptyEmail(ctx, email) {
     }
     return true;
 }
+
+// check resource
+
+export function checkUserResourceEmpty(ctx, value) {
+    return checkResourceEmpty(ctx, 'User', value);
+}
+
+export function checkProjectResourceEmpty(ctx, value) {
+    return checkResourceEmpty(ctx, 'Project', value);
+}
+
+export function checkPatchResourceEmpty(ctx, value) {
+    return checkResourceEmpty(ctx, 'kPatch', value);
+}
+
+export function checkResourceEmpty(ctx, resource, value) {
+    if (!value) {
+        ctx.status = 422;
+        ctx.body = {
+            message: resource + ' is not existed',
+            errors: [
+                {
+                    'resource': resource,
+                    'code': 'missing'
+                }
+            ]
+        };
+        return false;
+    }
+    return true;
+}
+
+// check valid
 
 export function checkValidEmail(ctx, email) {
     if (!regex.validEmail(email)) {
@@ -40,24 +91,6 @@ export function checkValidEmail(ctx, email) {
     return true;
 }
 
-export function checkEmptyPassword(ctx, password) {
-    if (!password) {
-        ctx.status = 422;
-        ctx.body = {
-            message: 'password is empty',
-            errors: [
-                {
-                    'resource': 'User',
-                    'field': 'password',
-                    'code': 'missing_field'
-                }
-            ]
-        };
-        return false;
-    }
-    return true;
-}
-
 export function checkValidPassword(ctx, password) {
     if (!regex.validPassword(password)) {
         ctx.status = 422;
@@ -68,60 +101,6 @@ export function checkValidPassword(ctx, password) {
                     resource: 'User',
                     field: 'password',
                     code: 'invalid'
-                }
-            ]
-        };
-        return false;
-    }
-    return true;
-}
-
-export function checkEmptySetPwdToken(ctx, token) {
-    if (!token) {
-        ctx.status = 422;
-        ctx.body = {
-            message: 'token is empty',
-            errors: [
-                {
-                    'resource': 'SetPwdToken',
-                    'field': 'id',
-                    'code': 'missing_field'
-                }
-            ]
-        };
-        return false;
-    }
-    return true;
-}
-
-export function checkEmptyBundleId(ctx, bundle_id) {
-    if (!bundle_id) {
-        ctx.status = 422;
-        ctx.body = {
-            message: 'bundle_id is empty',
-            errors: [
-                {
-                    'resource': 'Project',
-                    'field': 'bundle_id',
-                    'code': 'missing_field'
-                }
-            ]
-        };
-        return false;
-    }
-    return true;
-}
-
-export function checkEmptyProjectName(ctx, name) {
-    if (!name) {
-        ctx.status = 422;
-        ctx.body = {
-            message: 'name is empty',
-            errors: [
-                {
-                    'resource': 'Project',
-                    'field': 'name',
-                    'code': 'missing_field'
                 }
             ]
         };
