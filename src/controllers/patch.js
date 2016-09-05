@@ -260,3 +260,48 @@ export async function create(ctx, next) {
     ctx.status = 201;
     ctx.body = response;
 }
+
+/**
+ * list all project versions in project
+ *
+ * @param ctx
+ * @param next
+ */
+export async function listProjectVersions(ctx, next) {
+    const project_id = ctx.params.project;
+
+    let project = null;
+    try {
+        project = await Project.findById(project_id);
+    } catch (err) {
+        ctx.throw(500);
+    }
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
+    }
+
+    let user = await auth.getUser(ctx);
+    if (!user) {
+        ctx.throw(401);
+    }
+    if (user.role != 1) {
+        if (!project.isMember(user.id)) {
+            ctx.throw(403);
+        }
+    }
+
+    const version_objects = await Patch.aggregate([
+        {$match: {project_id: project_id}},
+        {$group: {_id: "$project_version"}},
+        {$sort : {project_version : 1}}
+    ]);
+    let versions = [];
+    for (let version_object of version_objects) {
+        versions.push(version_object._id);
+    }
+    debug(versions);
+    ctx.body = {
+        id: project_id,
+        versions: versions
+    };
+}

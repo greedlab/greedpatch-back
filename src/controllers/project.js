@@ -3,6 +3,7 @@
  */
 
 import Project from '../models/project';
+import Patch from '../models/patch';
 import User from '../models/user';
 import * as auth from '../tools/auth';
 import * as check from '../tools/check';
@@ -242,24 +243,21 @@ export async function listMy(ctx, next) {
  */
 export async function addMember(ctx, next) {
     debug(ctx.request.body);
-    const project_id = ctx.params.project;
-    if (!project_id) {
-        ctx.throw(400, 'project can not be empty');
-    }
 
     const email = ctx.request.body.email;
-    if (!email) {
-        ctx.throw(400, 'email can not be empty');
+    if (check.checkProjectEmpty(ctx, 'email', email)) {
+        return;
     }
 
+    const project_id = ctx.params.project;
     let project = null;
     try {
         project = await Project.findById(project_id);
     } catch (err) {
         ctx.throw(500, err.message);
     }
-    if (!project) {
-        ctx.throw(422, 'project is not existed');
+    if (check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     const user = await auth.getUser(ctx);
@@ -279,11 +277,11 @@ export async function addMember(ctx, next) {
         ctx.throw(500, err.message);
     }
     if (!add_user) {
-        ctx.throw(422, 'user is not existed');
+        response_util.resourceNotExist(ctx, 'User', 'email');
     }
 
     if (project.isMember(add_user.id)) {
-        ctx.throw(422, 'user is in the project');
+        response_util.resourceAlreadyExists(ctx, 'Project', 'email');
     }
 
     let members = project.members || [];
@@ -309,8 +307,8 @@ export async function addMember(ctx, next) {
  */
 export async function listMembers(ctx, next) {
     const project_id = ctx.params.project;
-    if (!project_id) {
-        ctx.throw(400, 'project can not be empty');
+    if (check.checkProjectEmpty(ctx, 'project_id', project_id)) {
+        return;
     }
 
     let project = null;
@@ -319,8 +317,8 @@ export async function listMembers(ctx, next) {
     } catch (err) {
         ctx.throw(500, err.message);
     }
-    if (!project) {
-        ctx.throw(422, 'project is not existed');
+    if (check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
 
     let user = await auth.getUser(ctx);
@@ -348,25 +346,21 @@ export async function listMembers(ctx, next) {
  */
 export async function delMember(ctx, next) {
     debug(ctx.request.body);
-    const project_id = ctx.params.project;
-    if (!project_id) {
-        ctx.throw(400, 'project can not be empty');
-    }
-
     const member_id = ctx.params.member;
-    if (!project_id) {
-        ctx.throw(400, 'member can not be empty');
+    const project_id = ctx.params.project;
+    if (check.checkProjectEmpty(ctx, 'project_id', project_id)) {
+        return;
     }
-
     let project = null;
     try {
         project = await Project.findById(project_id);
     } catch (err) {
         ctx.throw(500, err.message);
     }
-    if (!project) {
-        ctx.throw(422, 'project is not existed');
+    if (check.checkProjectResourceEmpty(ctx, project)) {
+        return;
     }
+
 
     const user = await auth.getUser(ctx);
     if (!user) {
@@ -374,17 +368,18 @@ export async function delMember(ctx, next) {
     }
     if (user.role != 1) {
         if (!project.isManager(user.id)) {
-            ctx.throw(403, 'no permission');
+            ctx.throw(403);
         }
     }
 
     if (project.isManager(member_id)) {
-        ctx.throw(403, 'can not delete manager');
+        ctx.throw(403);
     }
 
     const index = project.indexOf(member_id);
-    if (index == -1) {
-        ctx.throw(422, 'member is not in the project');
+    if (index < 0) {
+        response_util.fieldInvalid(ctx, 'Project', 'member', 'member is not in the project');
+        return;
     }
 
     let members = project.members;
@@ -393,7 +388,7 @@ export async function delMember(ctx, next) {
     try {
         await project.update({$set: {members}});
     } catch (err) {
-        ctx.throw(500, err.message);
+        ctx.throw(500);
     }
 
     ctx.status = 204;

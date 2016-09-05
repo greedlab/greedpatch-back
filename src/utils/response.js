@@ -23,6 +23,8 @@ export function emailNotExist(ctx) {
     };
 }
 
+// resource is not existed
+
 export function userNotExist(ctx) {
     ctx.status = 422;
     ctx.body = {
@@ -75,3 +77,63 @@ export function patchExisted(ctx) {
     };
 }
 
+
+// resource does not exist
+
+export function resourceNotExist(ctx, resource, field) {
+    ctx.status = 422;
+    ctx.body = {
+        message: resource + ' does not exist',
+        errors: [
+            {
+                'resource': resource,
+                'field': field,
+                'code': 'already_exists'
+            }
+        ]
+    };
+}
+
+// resource already exists
+
+export function resourceAlreadyExists(ctx, resource, field) {
+    ctx.status = 422;
+    ctx.body = {
+        message: resource + ' already exists',
+        errors: [
+            {
+                'resource': resource,
+                'field': field,
+                'code': 'already_exists'
+            }
+        ]
+    };
+}
+
+// field invalid
+
+export function fieldInvalid(ctx, resource, field, message) {
+    ctx.status = 422;
+    if (field) {
+        ctx.body = {
+            message: message,
+            errors: [
+                {
+                    'resource': resource,
+                    'field': field,
+                    'code': 'invalid'
+                }
+            ]
+        };
+    } else {
+        ctx.body = {
+            message: message,
+            errors: [
+                {
+                    'resource': resource,
+                    'code': 'invalid'
+                }
+            ]
+        };
+    }
+}

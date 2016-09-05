@@ -9,6 +9,9 @@ exports.userNotExist = userNotExist;
 exports.setPwdTokenNotExist = setPwdTokenNotExist;
 exports.projectNotExist = projectNotExist;
 exports.patchExisted = patchExisted;
+exports.resourceNotExist = resourceNotExist;
+exports.resourceAlreadyExists = resourceAlreadyExists;
+exports.fieldInvalid = fieldInvalid;
 /**
  * Created by Bell on 16/8/31.
  */
@@ -31,6 +34,8 @@ function emailNotExist(ctx) {
         }]
     };
 }
+
+// resource is not existed
 
 function userNotExist(ctx) {
     ctx.status = 422;
@@ -74,5 +79,57 @@ function patchExisted(ctx) {
             'code': 'already_exists'
         }]
     };
+}
+
+// resource does not exist
+
+function resourceNotExist(ctx, resource, field) {
+    ctx.status = 422;
+    ctx.body = {
+        message: resource + ' does not exist',
+        errors: [{
+            'resource': resource,
+            'field': field,
+            'code': 'already_exists'
+        }]
+    };
+}
+
+// resource already exists
+
+function resourceAlreadyExists(ctx, resource, field) {
+    ctx.status = 422;
+    ctx.body = {
+        message: resource + ' already exists',
+        errors: [{
+            'resource': resource,
+            'field': field,
+            'code': 'already_exists'
+        }]
+    };
+}
+
+// field invalid
+
+function fieldInvalid(ctx, resource, field, message) {
+    ctx.status = 422;
+    if (field) {
+        ctx.body = {
+            message: message,
+            errors: [{
+                'resource': resource,
+                'field': field,
+                'code': 'invalid'
+            }]
+        };
+    } else {
+        ctx.body = {
+            message: message,
+            errors: [{
+                'resource': resource,
+                'code': 'invalid'
+            }]
+        };
+    }
 }
 //# sourceMappingURL=response.js.map

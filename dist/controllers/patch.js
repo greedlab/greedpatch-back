@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.create = exports.list = exports.checkPatch = exports.del = exports.detail = undefined;
+exports.listProjectVersions = exports.create = exports.list = exports.checkPatch = exports.del = exports.detail = undefined;
 
 var _bluebird = require('bluebird');
 
@@ -563,6 +563,132 @@ var create = exports.create = function () {
 
     return function create(_x9, _x10) {
         return _ref5.apply(this, arguments);
+    };
+}();
+
+/**
+ * list all project versions in project
+ *
+ * @param ctx
+ * @param next
+ */
+
+
+var listProjectVersions = exports.listProjectVersions = function () {
+    var _ref6 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee6(ctx, next) {
+        var project_id, project, user, version_objects, versions, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, version_object;
+
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
+            while (1) {
+                switch (_context6.prev = _context6.next) {
+                    case 0:
+                        project_id = ctx.params.project;
+                        project = null;
+                        _context6.prev = 2;
+                        _context6.next = 5;
+                        return _project2.default.findById(project_id);
+
+                    case 5:
+                        project = _context6.sent;
+                        _context6.next = 11;
+                        break;
+
+                    case 8:
+                        _context6.prev = 8;
+                        _context6.t0 = _context6['catch'](2);
+
+                        ctx.throw(500);
+
+                    case 11:
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
+                            _context6.next = 13;
+                            break;
+                        }
+
+                        return _context6.abrupt('return');
+
+                    case 13:
+                        _context6.next = 15;
+                        return auth.getUser(ctx);
+
+                    case 15:
+                        user = _context6.sent;
+
+                        if (!user) {
+                            ctx.throw(401);
+                        }
+                        if (user.role != 1) {
+                            if (!project.isMember(user.id)) {
+                                ctx.throw(403);
+                            }
+                        }
+
+                        _context6.next = 20;
+                        return _patch2.default.aggregate([{ $match: { project_id: project_id } }, { $group: { _id: "$project_version" } }, { $sort: { project_version: 1 } }]);
+
+                    case 20:
+                        version_objects = _context6.sent;
+                        versions = [];
+                        _iteratorNormalCompletion = true;
+                        _didIteratorError = false;
+                        _iteratorError = undefined;
+                        _context6.prev = 25;
+
+                        for (_iterator = version_objects[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                            version_object = _step.value;
+
+                            versions.push(version_object._id);
+                        }
+                        _context6.next = 33;
+                        break;
+
+                    case 29:
+                        _context6.prev = 29;
+                        _context6.t1 = _context6['catch'](25);
+                        _didIteratorError = true;
+                        _iteratorError = _context6.t1;
+
+                    case 33:
+                        _context6.prev = 33;
+                        _context6.prev = 34;
+
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
+                        }
+
+                    case 36:
+                        _context6.prev = 36;
+
+                        if (!_didIteratorError) {
+                            _context6.next = 39;
+                            break;
+                        }
+
+                        throw _iteratorError;
+
+                    case 39:
+                        return _context6.finish(36);
+
+                    case 40:
+                        return _context6.finish(33);
+
+                    case 41:
+                        debug(versions);
+                        ctx.body = {
+                            id: project_id,
+                            versions: versions
+                        };
+
+                    case 43:
+                    case 'end':
+                        return _context6.stop();
+                }
+            }
+        }, _callee6, this, [[2, 8], [25, 29, 33, 41], [34,, 36, 40]]);
+    }));
+
+    return function listProjectVersions(_x11, _x12) {
+        return _ref6.apply(this, arguments);
     };
 }();
 

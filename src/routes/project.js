@@ -22,7 +22,8 @@ router
     .get('/:project/members', ensureUser, project.listMembers)
     .delete('/:project/members/:member', ensureUser, project.delMember)
     .post('/:project/patches', ensureUser, patch.create)
-    .get('/:project/patches', ensureUser, patch.list);
+    .get('/:project/patches', ensureUser, patch.list)
+    .get('/:project/versions', ensureUser, patch.listProjectVersions);
 
 export default {
     base_url,
