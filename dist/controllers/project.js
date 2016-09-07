@@ -275,7 +275,7 @@ var del = exports.del = function () {
 
 var update = exports.update = function () {
     var _ref4 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee4(ctx, next) {
-        var id, project, user, object, name, introduction;
+        var id, project, user, object, name, introduction, bundle_id;
         return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
                 switch (_context4.prev = _context4.next) {
@@ -333,31 +333,36 @@ var update = exports.update = function () {
                         if (introduction) {
                             object.introduction = introduction;
                         }
-                        _context4.prev = 23;
-                        _context4.next = 26;
-                        return project.update(object);
+                        bundle_id = ctx.request.body.bundle_id;
 
-                    case 26:
-                        _context4.next = 31;
-                        break;
+                        if (bundle_id) {
+                            object.bundle_id = bundle_id;
+                        }
+                        _context4.prev = 25;
+                        _context4.next = 28;
+                        return project.update({ $set: object });
 
                     case 28:
-                        _context4.prev = 28;
-                        _context4.t1 = _context4['catch'](23);
+                        _context4.next = 33;
+                        break;
+
+                    case 30:
+                        _context4.prev = 30;
+                        _context4.t1 = _context4['catch'](25);
 
                         ctx.throw(500);
 
-                    case 31:
+                    case 33:
 
                         // response
                         ctx.status = 204;
 
-                    case 32:
+                    case 34:
                     case 'end':
                         return _context4.stop();
                 }
             }
-        }, _callee4, this, [[2, 8], [23, 28]]);
+        }, _callee4, this, [[2, 8], [25, 30]]);
     }));
 
     return function update(_x7, _x8) {
@@ -503,7 +508,7 @@ var addMember = exports.addMember = function () {
 
                         email = ctx.request.body.email;
 
-                        if (!check.checkProjectEmpty(ctx, 'email', email)) {
+                        if (check.checkProjectEmpty(ctx, 'email', email)) {
                             _context7.next = 4;
                             break;
                         }
@@ -529,7 +534,7 @@ var addMember = exports.addMember = function () {
                         ctx.throw(500, _context7.t0.message);
 
                     case 15:
-                        if (!check.checkProjectResourceEmpty(ctx, project)) {
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
                             _context7.next = 17;
                             break;
                         }
@@ -569,14 +574,24 @@ var addMember = exports.addMember = function () {
                         ctx.throw(500, _context7.t1.message);
 
                     case 32:
-                        if (!add_user) {
-                            response_util.resourceNotExist(ctx, 'User', 'email');
+                        if (add_user) {
+                            _context7.next = 35;
+                            break;
                         }
 
-                        if (project.isMember(add_user.id)) {
-                            response_util.resourceAlreadyExists(ctx, 'Project', 'email');
+                        response_util.resourceNotExist(ctx, 'User', 'email');
+                        return _context7.abrupt('return');
+
+                    case 35:
+                        if (!project.isMember(add_user.id)) {
+                            _context7.next = 38;
+                            break;
                         }
 
+                        response_util.resourceAlreadyExists(ctx, 'User', 'email');
+                        return _context7.abrupt('return');
+
+                    case 38:
                         members = project.members || [];
 
                         members.push({
@@ -584,30 +599,30 @@ var addMember = exports.addMember = function () {
                             email: add_user.email,
                             role: 0
                         });
-                        _context7.prev = 36;
-                        _context7.next = 39;
+                        _context7.prev = 40;
+                        _context7.next = 43;
                         return project.update({ $set: { members: members } });
 
-                    case 39:
-                        _context7.next = 44;
+                    case 43:
+                        _context7.next = 48;
                         break;
 
-                    case 41:
-                        _context7.prev = 41;
-                        _context7.t2 = _context7['catch'](36);
+                    case 45:
+                        _context7.prev = 45;
+                        _context7.t2 = _context7['catch'](40);
 
                         ctx.throw(500, _context7.t2.message);
 
-                    case 44:
+                    case 48:
                         // response
                         ctx.status = 204;
 
-                    case 45:
+                    case 49:
                     case 'end':
                         return _context7.stop();
                 }
             }
-        }, _callee7, this, [[6, 12], [23, 29], [36, 41]]);
+        }, _callee7, this, [[6, 12], [23, 29], [40, 45]]);
     }));
 
     return function addMember(_x13, _x14) {
@@ -719,7 +734,7 @@ var delMember = exports.delMember = function () {
                         member_id = ctx.params.member;
                         project_id = ctx.params.project;
 
-                        if (!check.checkProjectEmpty(ctx, 'project_id', project_id)) {
+                        if (check.checkProjectEmpty(ctx, 'project_id', project_id)) {
                             _context9.next = 5;
                             break;
                         }
@@ -744,7 +759,7 @@ var delMember = exports.delMember = function () {
                         ctx.throw(500, _context9.t0.message);
 
                     case 15:
-                        if (!check.checkProjectResourceEmpty(ctx, project)) {
+                        if (check.checkProjectResourceEmpty(ctx, project)) {
                             _context9.next = 17;
                             break;
                         }

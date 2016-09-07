@@ -120,7 +120,7 @@ var set = exports.set = function () {
                         }
 
                         _context2.next = 13;
-                        return permission.update(permission_object);
+                        return permission.update({ $set: permission_object });
 
                     case 13:
                         _context2.next = 18;

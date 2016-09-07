@@ -22,13 +22,9 @@ var ensureUser = exports.ensureUser = function () {
                 switch (_context.prev = _context.next) {
                     case 0:
                         token = getToken(ctx);
-
-                        if (!token) {
-                            token = ctx.cookies.get(token_key);
-                        }
                         return _context.abrupt('return', ensureUserWithToken(ctx, next, token));
 
-                    case 3:
+                    case 2:
                     case 'end':
                         return _context.stop();
                 }
@@ -346,6 +342,8 @@ var getPassword = exports.getPassword = function () {
 }();
 
 exports.getToken = getToken;
+exports.getTokenFromHeader = getTokenFromHeader;
+exports.getTokenFromCookie = getTokenFromCookie;
 exports.getPayload = getPayload;
 exports.getID = getID;
 
@@ -387,6 +385,14 @@ var debug = new _debug2.default(_package2.default.name); /**
 
 var token_key = 'token';
 var role_key = 'role';function getToken(ctx) {
+    var token = getTokenFromHeader(ctx);
+    if (!token) {
+        token = getTokenFromCookie(ctx);
+    }
+    return token;
+}
+
+function getTokenFromHeader(ctx) {
     var header = ctx.request.header.authorization;
     if (!header) {
         return null;
@@ -401,6 +407,10 @@ var role_key = 'role';function getToken(ctx) {
         return token;
     }
     return null;
+}
+
+function getTokenFromCookie(ctx) {
+    return ctx.cookies.get(token_key);
 }
 
 /**

@@ -174,8 +174,12 @@ export async function update(ctx, next) {
     if (introduction) {
         object.introduction = introduction;
     }
+    const bundle_id = ctx.request.body.bundle_id;
+    if (bundle_id) {
+        object.bundle_id = bundle_id;
+    }
     try {
-        await project.update(object);
+        await project.update({$set:object});
     } catch (err) {
         ctx.throw(500);
     }
@@ -245,7 +249,7 @@ export async function addMember(ctx, next) {
     debug(ctx.request.body);
 
     const email = ctx.request.body.email;
-    if (check.checkProjectEmpty(ctx, 'email', email)) {
+    if (!check.checkProjectEmpty(ctx, 'email', email)) {
         return;
     }
 
@@ -256,7 +260,7 @@ export async function addMember(ctx, next) {
     } catch (err) {
         ctx.throw(500, err.message);
     }
-    if (check.checkProjectResourceEmpty(ctx, project)) {
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
         return;
     }
 
@@ -278,10 +282,12 @@ export async function addMember(ctx, next) {
     }
     if (!add_user) {
         response_util.resourceNotExist(ctx, 'User', 'email');
+        return;
     }
 
     if (project.isMember(add_user.id)) {
-        response_util.resourceAlreadyExists(ctx, 'Project', 'email');
+        response_util.resourceAlreadyExists(ctx, 'User', 'email');
+        return;
     }
 
     let members = project.members || [];
@@ -348,7 +354,7 @@ export async function delMember(ctx, next) {
     debug(ctx.request.body);
     const member_id = ctx.params.member;
     const project_id = ctx.params.project;
-    if (check.checkProjectEmpty(ctx, 'project_id', project_id)) {
+    if (!check.checkProjectEmpty(ctx, 'project_id', project_id)) {
         return;
     }
     let project = null;
@@ -357,7 +363,7 @@ export async function delMember(ctx, next) {
     } catch (err) {
         ctx.throw(500, err.message);
     }
-    if (check.checkProjectResourceEmpty(ctx, project)) {
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
         return;
     }
 

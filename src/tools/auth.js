@@ -24,9 +24,6 @@ const role_key = 'role';
  */
 export async function ensureUser(ctx, next) {
     let token = getToken(ctx);
-    if (!token) {
-        token = ctx.cookies.get(token_key);
-    }
     return ensureUserWithToken(ctx, next, token);
 }
 
@@ -116,6 +113,14 @@ export async function ensureManager(ctx, next) {
  * @returns {*}
  */
 export function getToken(ctx) {
+    let token = getTokenFromHeader(ctx);
+    if (!token) {
+        token = getTokenFromCookie(ctx);
+    }
+    return token;
+}
+
+export function getTokenFromHeader(ctx) {
     const header = ctx.request.header.authorization;
     if (!header) {
         return null;
@@ -130,6 +135,10 @@ export function getToken(ctx) {
         return token;
     }
     return null;
+}
+
+export function getTokenFromCookie(ctx) {
+    return ctx.cookies.get(token_key);
 }
 
 /**

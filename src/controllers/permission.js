@@ -65,7 +65,7 @@ export async function set(ctx, next) {
         const permissions = await Permission.find({type}).limit(1);
         let permission = (permissions && permissions.length > 0) ? permissions[0] : null;
         if (permission) {
-            await permission.update(permission_object);
+            await permission.update({$set:permission_object});
         } else {
             permission = new Permission(permission_object);
             await permission.save();
