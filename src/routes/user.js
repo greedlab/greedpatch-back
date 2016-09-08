@@ -13,6 +13,7 @@ let router = new Router({ prefix: base_url });
 router
     .get('/', auth.ensureUser, auth.ensureManager, controller.list)
     .get('/me/profile', auth.ensureUser, controller.myProfile)
+    .post('/me/modify-password', auth.ensureUser, controller.modifyMyPassword)
     .post('/:id/password', auth.ensureUser, auth.ensureManager, controller.updatePassword)
     .post('/:id/status', auth.ensureUser, auth.ensureManager, controller.updateStatus);
 

@@ -406,82 +406,103 @@ var modifyMyPassword = exports.modifyMyPassword = function () {
                             ctx.throw(401);
                         }
                         password = ctx.request.body.password;
+
+                        if (check.checkUserEmpty(ctx, 'password', password)) {
+                            _context6.next = 7;
+                            break;
+                        }
+
+                        return _context6.abrupt('return');
+
+                    case 7:
                         new_password = ctx.request.body.new_password;
 
-                        if (!password || !new_password) {
-                            ctx.throw(400);
+                        if (check.checkUserEmpty(ctx, 'new_password', new_password)) {
+                            _context6.next = 10;
+                            break;
                         }
 
-                        // verify password
-                        _context6.next = 9;
+                        return _context6.abrupt('return');
+
+                    case 10:
+                        _context6.next = 12;
                         return user.validatePassword(password);
 
-                    case 9:
+                    case 12:
                         equal = _context6.sent;
 
-                        if (!equal) {
-                            ctx.throw(401);
+                        if (equal) {
+                            _context6.next = 16;
+                            break;
                         }
 
-                        if (new_password === password) {
-                            ctx.throw(422, 'please don not use the same password');
+                        response_util.fieldInvalid(ctx, 'User', 'password', 'Wrong password');
+                        return _context6.abrupt('return');
+
+                    case 16:
+                        if (!(new_password === password)) {
+                            _context6.next = 19;
+                            break;
                         }
 
-                        // udpate password and token valid timestamp
-                        _context6.prev = 12;
-                        _context6.next = 15;
-                        return user.updatePassword(new_password);
-
-                    case 15:
-                        _context6.next = 17;
-                        return user_redis.setTimestamp(user.id, Date.now());
-
-                    case 17:
-                        _context6.next = 22;
-                        break;
+                        response_util.fieldInvalid(ctx, 'User', 'new_password', 'Same to the original');
+                        return _context6.abrupt('return');
 
                     case 19:
                         _context6.prev = 19;
-                        _context6.t0 = _context6['catch'](12);
+                        _context6.next = 22;
+                        return user.updatePassword(new_password);
+
+                    case 22:
+                        _context6.next = 24;
+                        return user_redis.setTimestamp(user.id, Date.now());
+
+                    case 24:
+                        _context6.next = 29;
+                        break;
+
+                    case 26:
+                        _context6.prev = 26;
+                        _context6.t0 = _context6['catch'](19);
 
                         ctx.throw(500, _context6.t0.message);
 
-                    case 22:
+                    case 29:
 
                         // generate new token
                         payload = token_util.generatePayload(user.id);
                         token = token_util.generateTokenFromPayload(payload);
-                        _context6.prev = 24;
-                        _context6.next = 27;
+                        _context6.prev = 31;
+                        _context6.next = 34;
                         return token_redis.add(token, payload.exp);
 
-                    case 27:
-                        _context6.next = 32;
+                    case 34:
+                        _context6.next = 39;
                         break;
-
-                    case 29:
-                        _context6.prev = 29;
-                        _context6.t1 = _context6['catch'](24);
-
-                        ctx.throw(500);
-
-                    case 32:
-                        _context6.prev = 32;
-                        old_token = auth.getToken(ctx);
-                        _context6.next = 36;
-                        return token_redis.del(old_token);
 
                     case 36:
-                        _context6.next = 41;
-                        break;
-
-                    case 38:
-                        _context6.prev = 38;
-                        _context6.t2 = _context6['catch'](32);
+                        _context6.prev = 36;
+                        _context6.t1 = _context6['catch'](31);
 
                         ctx.throw(500);
 
-                    case 41:
+                    case 39:
+                        _context6.prev = 39;
+                        old_token = auth.getToken(ctx);
+                        _context6.next = 43;
+                        return token_redis.del(old_token);
+
+                    case 43:
+                        _context6.next = 48;
+                        break;
+
+                    case 45:
+                        _context6.prev = 45;
+                        _context6.t2 = _context6['catch'](39);
+
+                        ctx.throw(500);
+
+                    case 48:
                         response = user.toJSON();
 
                         delete response.password;
@@ -491,18 +512,18 @@ var modifyMyPassword = exports.modifyMyPassword = function () {
                         };
 
                         if (!next) {
-                            _context6.next = 46;
+                            _context6.next = 53;
                             break;
                         }
 
                         return _context6.abrupt('return', next());
 
-                    case 46:
+                    case 53:
                     case 'end':
                         return _context6.stop();
                 }
             }
-        }, _callee6, this, [[12, 19], [24, 29], [32, 38]]);
+        }, _callee6, this, [[19, 26], [31, 36], [39, 45]]);
     }));
 
     return function modifyMyPassword(_x10, _x11) {

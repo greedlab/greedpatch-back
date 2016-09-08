@@ -204,19 +204,25 @@ export async function modifyMyPassword(ctx, next) {
         ctx.throw(401);
     }
     const password = ctx.request.body.password;
+    if (!check.checkUserEmpty(ctx, 'password', password)) {
+        return;
+    }
+
     const new_password = ctx.request.body.new_password;
-    if (!password || !new_password) {
-        ctx.throw(400);
+    if (!check.checkUserEmpty(ctx, 'new_password', new_password)) {
+        return;
     }
 
     // verify password
     const equal = await user.validatePassword(password);
     if (!equal) {
-        ctx.throw(401);
+        response_util.fieldInvalid(ctx, 'User', 'password', 'Wrong password');
+        return;
     }
 
     if (new_password === password) {
-        ctx.throw(422, 'please don not use the same password');
+        response_util.fieldInvalid(ctx, 'User', 'new_password', 'Same to the original');
+        return;
     }
 
     // udpate password and token valid timestamp

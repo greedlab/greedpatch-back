@@ -16,7 +16,7 @@ var _bluebird = require('bluebird');
  */
 var generate = exports.generate = function () {
     var _ref = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee(ctx, next) {
-        var name, userid, payload, token, token_object, response;
+        var name, password, user, result, payload, token, token_object, response;
         return regeneratorRuntime.wrap(function _callee$(_context) {
             while (1) {
                 switch (_context.prev = _context.next) {
@@ -24,56 +24,113 @@ var generate = exports.generate = function () {
                         debug(ctx.request.body);
                         name = ctx.request.body.name;
 
-
-                        if (!name) {
-                            ctx.throw(400, 'name can not be empty');
+                        if (check.checkEmpty(ctx, 'Token', 'name', name)) {
+                            _context.next = 4;
+                            break;
                         }
 
-                        userid = auth.getID(ctx);
+                        return _context.abrupt('return');
 
-                        if (!userid) {
+                    case 4:
+                        password = ctx.request.body.password;
+
+                        if (check.checkEmpty(ctx, 'User', 'password', password)) {
+                            _context.next = 7;
+                            break;
+                        }
+
+                        return _context.abrupt('return');
+
+                    case 7:
+                        user = null;
+                        _context.prev = 8;
+                        _context.next = 11;
+                        return auth.getFullUser(ctx);
+
+                    case 11:
+                        user = _context.sent;
+                        _context.next = 17;
+                        break;
+
+                    case 14:
+                        _context.prev = 14;
+                        _context.t0 = _context['catch'](8);
+
+                        ctx.throw(500);
+
+                    case 17:
+
+                        if (!user) {
                             ctx.throw(401);
                         }
 
-                        payload = token_util.generateCheckPatchPayload(userid);
+                        // validate password
+                        result = false;
+                        _context.prev = 19;
+                        _context.next = 22;
+                        return user.validatePassword(password);
+
+                    case 22:
+                        result = _context.sent;
+                        _context.next = 28;
+                        break;
+
+                    case 25:
+                        _context.prev = 25;
+                        _context.t1 = _context['catch'](19);
+
+                        ctx.throw(500);
+
+                    case 28:
+                        if (result) {
+                            _context.next = 31;
+                            break;
+                        }
+
+                        response_util.fieldInvalid(ctx, 'User', 'password', 'Invalid password');
+                        return _context.abrupt('return');
+
+                    case 31:
+                        payload = token_util.generateCheckPatchPayload(user.id);
                         token = token_util.generateTokenFromPayload(payload);
 
                         if (!token) {
                             ctx.throw(500);
                         }
 
-                        token_object = new _token4.default({ userid: userid, token: token, name: name, type: 1 });
-                        _context.prev = 9;
-                        _context.next = 12;
+                        token_object = new _token4.default({ userid: user.id, token: token, name: name, type: 1 });
+                        _context.prev = 35;
+                        _context.next = 38;
                         return token_object.save();
 
-                    case 12:
-                        _context.next = 14;
+                    case 38:
+                        _context.next = 40;
                         return token_redis.add(token, payload.exp);
 
-                    case 14:
-                        _context.next = 19;
+                    case 40:
+                        _context.next = 45;
                         break;
 
-                    case 16:
-                        _context.prev = 16;
-                        _context.t0 = _context['catch'](9);
+                    case 42:
+                        _context.prev = 42;
+                        _context.t2 = _context['catch'](35);
 
-                        ctx.throw(500, _context.t0.message);
+                        ctx.throw(500, _context.t2.message);
 
-                    case 19:
+                    case 45:
 
                         // response
                         response = token_object.toJSON();
 
                         ctx.body = response;
+                        ctx.statusCode = 201;
 
-                    case 21:
+                    case 48:
                     case 'end':
                         return _context.stop();
                 }
             }
-        }, _callee, this, [[9, 16]]);
+        }, _callee, this, [[8, 14], [19, 25], [35, 42]]);
     }));
 
     return function generate(_x, _x2) {
@@ -92,7 +149,7 @@ var generate = exports.generate = function () {
 
 var list = exports.list = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
-        var type, userid, tokens, array, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, token, payload, timestamp;
+        var type, userid, token_objects, array, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, token_object, payload, timestamp;
 
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
@@ -102,19 +159,19 @@ var list = exports.list = function () {
                         userid = auth.getID(ctx);
 
                         if (!userid) {
-                            ctx.throw(403);
+                            ctx.throw(401);
                         }
                         _context2.next = 5;
                         return _token4.default.find({ userid: userid, type: type }).lean();
 
                     case 5:
-                        tokens = _context2.sent;
+                        token_objects = _context2.sent;
                         array = [];
                         _iteratorNormalCompletion = true;
                         _didIteratorError = false;
                         _iteratorError = undefined;
                         _context2.prev = 10;
-                        _iterator = tokens[Symbol.iterator]();
+                        _iterator = token_objects[Symbol.iterator]();
 
                     case 12:
                         if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
@@ -122,8 +179,8 @@ var list = exports.list = function () {
                             break;
                         }
 
-                        token = _step.value;
-                        payload = token_util.getPayload(token);
+                        token_object = _step.value;
+                        payload = token_util.getPayload(token_object.token);
 
                         if (!payload) {
                             _context2.next = 20;
@@ -138,8 +195,8 @@ var list = exports.list = function () {
 
                         // whether token is valid
                         if (!timestamp || timestamp == 0 || payload.iat > timestamp) {
-                            delete token.token;
-                            array.push(token);
+                            delete token_object.token;
+                            array.push(token_object);
                         }
 
                     case 20:
@@ -347,6 +404,10 @@ var _token = require('../utils/token');
 
 var token_util = _interopRequireWildcard(_token);
 
+var _response = require('../utils/response');
+
+var response_util = _interopRequireWildcard(_response);
+
 var _token2 = require('../redis/token');
 
 var token_redis = _interopRequireWildcard(_token2);
@@ -362,6 +423,10 @@ var _token4 = _interopRequireDefault(_token3);
 var _auth = require('../tools/auth');
 
 var auth = _interopRequireWildcard(_auth);
+
+var _check = require('../tools/check');
+
+var check = _interopRequireWildcard(_check);
 
 var _debug = require('debug');
 

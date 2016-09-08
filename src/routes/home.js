@@ -16,7 +16,6 @@ router
     .post('/register', user.register)
     .post('/login', user.login)
     .post('/logout', auth.ensureUser, user.logout)
-    .post('/modify-my-password', auth.ensureUser, user.modifyMyPassword)
     .post('/reset-password', user.resetPassword)
     .post('/set-password', user.setPassword);
 

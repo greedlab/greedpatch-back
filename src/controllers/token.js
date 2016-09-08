@@ -3,10 +3,12 @@
  */
 
 import * as token_util from '../utils/token';
+import * as response_util from '../utils/response';
 import * as token_redis from '../redis/token';
 import * as user_redis from '../redis/user';
 import Token from '../models/token';
 import * as auth from '../tools/auth';
+import * as check from '../tools/check';
 import Debug from 'debug';
 import pkg from '../../package.json';
 const debug = new Debug(pkg.name);
@@ -21,23 +23,45 @@ const debug = new Debug(pkg.name);
 export async function generate(ctx, next) {
     debug(ctx.request.body);
     const name = ctx.request.body.name;
-
-    if (!name) {
-        ctx.throw(400, 'name can not be empty');
+    if (!check.checkEmpty(ctx, 'Token', 'name', name)) {
+        return;
     }
 
-    const userid = auth.getID(ctx);
-    if (!userid) {
+    const password = ctx.request.body.password;
+    if (!check.checkEmpty(ctx, 'User', 'password', password)) {
+        return;
+    }
+
+    let user = null;
+    try {
+        user = await auth.getFullUser(ctx);
+    } catch (err) {
+        ctx.throw(500);
+    }
+
+    if (!user) {
         ctx.throw(401);
     }
 
-    const payload = token_util.generateCheckPatchPayload(userid);
+    // validate password
+    let result = false;
+    try {
+        result = await user.validatePassword(password);
+    } catch (err) {
+        ctx.throw(500);
+    }
+    if (!result) {
+        response_util.fieldInvalid(ctx, 'User', 'password', 'Invalid password');
+        return;
+    }
+
+    const payload = token_util.generateCheckPatchPayload(user.id);
     const token = token_util.generateTokenFromPayload(payload);
     if (!token) {
         ctx.throw(500);
     }
 
-    const token_object = new Token({userid, token, name, type: 1});
+    const token_object = new Token({userid: user.id, token, name, type: 1});
     try {
         await token_object.save();
         await token_redis.add(token, payload.exp);
@@ -48,6 +72,7 @@ export async function generate(ctx, next) {
     // response
     const response = token_object.toJSON();
     ctx.body = response;
+    ctx.statusCode = 201;
 }
 
 /**
@@ -61,18 +86,18 @@ export async function list(ctx, next) {
     const type = ctx.request.body.type || 1;
     const userid = auth.getID(ctx);
     if (!userid) {
-        ctx.throw(403);
+        ctx.throw(401);
     }
-    let tokens = await Token.find({userid, type}).lean();
+    let token_objects = await Token.find({userid, type}).lean();
     let array = [];
-    for (let token of tokens) {
-        const payload = token_util.getPayload(token);
+    for (let token_object of token_objects) {
+        const payload = token_util.getPayload(token_object.token);
         if (payload) {
             const timestamp = await user_redis.getTimestamp(payload.id);
             // whether token is valid
             if (!timestamp || timestamp == 0 || payload.iat > timestamp) {
-                delete token.token;
-                array.push(token);
+                delete token_object.token;
+                array.push(token_object);
             }
         }
     }
