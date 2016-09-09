@@ -114,35 +114,35 @@ export async function list(ctx, next) {
  */
 export async function detail(ctx, next) {
     const id = ctx.params.id;
-    if (!id) {
-        ctx.throw(400, 'id can not be empty');
-    }
     const password = ctx.request.body.password;
-    if (!password) {
-        ctx.throw(400, 'password can not be empty');
+
+    if (!check.checkPatchEmpty(ctx, 'password', password)) {
+        return;
     }
 
     const user = await auth.getFullUser(ctx);
     if (!user) {
-        ctx.throw(403, 'unvalid token');
+        ctx.throw(401);
     }
 
     const result = await user.validatePassword(password);
     if (!result) {
-        ctx.throw(403, 'error password');
+        response_util.fieldInvalid(ctx, 'User', 'password', 'Invalid password');
+        return;
     }
 
     let token = null;
     try {
         token = await Token.findById(id);
     } catch (err) {
-        ctx.throw(422, 'unvalid id');
+        ctx.throw(500);
     }
     if (!token) {
-        ctx.throw(422, 'unvalid id');
+        response_util.resourceNotExist(ctx, 'Token', 'id');
+        return;
     }
     if (token.userid != user.id) {
-        ctx.throw(403, 'no permission');
+        ctx.throw(403);
     }
 
     // response

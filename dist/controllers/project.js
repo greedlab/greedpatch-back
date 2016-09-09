@@ -499,7 +499,7 @@ var listMy = exports.listMy = function () {
 
 var addMember = exports.addMember = function () {
     var _ref7 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee7(ctx, next) {
-        var email, project_id, project, user, add_user, members;
+        var email, pro1ject_id, project, user, add_user, members;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
                 switch (_context7.prev = _context7.next) {
@@ -516,7 +516,7 @@ var addMember = exports.addMember = function () {
                         return _context7.abrupt('return');
 
                     case 4:
-                        project_id = ctx.params.project;
+                        pro1ject_id = ctx.params.project;
                         project = null;
                         _context7.prev = 6;
                         _context7.next = 9;

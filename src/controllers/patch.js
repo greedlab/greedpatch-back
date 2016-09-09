@@ -100,12 +100,12 @@ export async function checkPatch(ctx, next) {
     debug(ctx.request.body);
 
     const project_id = ctx.request.body.project_id;
-    if (! check.checkPatchEmpty(ctx, 'project_id', project_id)) {
+    if (!check.checkPatchEmpty(ctx, 'project_id', project_id)) {
         return;
     }
 
     const project_version = ctx.request.body.project_version;
-    if (! check.checkPatchEmpty(ctx, 'project_version', project_version)) {
+    if (!check.checkPatchEmpty(ctx, 'project_version', project_version)) {
         return;
     }
 
@@ -191,11 +191,6 @@ export async function create(ctx, next) {
         return;
     }
 
-    const patch_version = body.patch_version;
-    if (!check.checkPatchEmpty(ctx, 'patch_version', patch_version)) {
-        return;
-    }
-
     const hash = body.hash;
     if (!check.checkPatchEmpty(ctx, 'hash', hash)) {
         return;
@@ -235,11 +230,28 @@ export async function create(ctx, next) {
             patch_version
         });
     } catch (err) {
-        ctx.throw(500,err);
+        ctx.throw(500, err);
     }
     if (existed) {
         response_util.patchExisted(ctx);
         return;
+    }
+
+    // get max patch_version
+    let patch_version_objects = null;
+    try {
+        patch_version_objects = await Patch.find({
+            project_id,
+            project_version
+        }, {patch_version: 1}).sort({patch_version: -1}).limit(1);
+    } catch (err) {
+        ctx.throw(500);
+    }
+
+    debug(patch_version_objects);
+    let patch_version = 1;
+    if (patch_version_objects && patch_version_objects.length > 0) {
+        patch_version = Number(patch_version_objects[0].patch_version) + 1;
     }
 
     const patch_object = {
@@ -292,16 +304,29 @@ export async function listProjectVersions(ctx, next) {
 
     const version_objects = await Patch.aggregate([
         {$match: {project_id: project_id}},
-        {$group: {_id: "$project_version"}},
-        {$sort : {project_version : 1}}
+        {
+            $group: {
+                _id: "$project_version",
+                patch_version: {$max: "$patch_version"}
+            }
+        },
+        {$sort: {project_version: 1}}
     ]);
-    let versions = [];
-    for (let version_object of version_objects) {
-        versions.push(version_object._id);
-    }
-    debug(versions);
-    ctx.body = {
+    debug(version_objects);
+
+    let data = {
         id: project_id,
-        versions: versions
+        versions: version_objects
     };
+
+    try {
+        const project = await Project.findById(project_id);
+        if (project) {
+            data.project_name = project.name;
+        }
+    } catch (err) {
+        ctx.throw(500);
+    }
+
+    ctx.body = data;
 }

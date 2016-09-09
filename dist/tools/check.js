@@ -52,7 +52,6 @@ function checkEmpty(ctx, resource, field, value) {
                 'code': 'missing_field'
             }]
         };
-        // ctx.throw(422);
         return false;
     }
     return true;

@@ -272,16 +272,16 @@ var detail = exports.detail = function () {
                 switch (_context3.prev = _context3.next) {
                     case 0:
                         id = ctx.params.id;
-
-                        if (!id) {
-                            ctx.throw(400, 'id can not be empty');
-                        }
                         password = ctx.request.body.password;
 
-                        if (!password) {
-                            ctx.throw(400, 'password can not be empty');
+                        if (check.checkPatchEmpty(ctx, 'password', password)) {
+                            _context3.next = 4;
+                            break;
                         }
 
+                        return _context3.abrupt('return');
+
+                    case 4:
                         _context3.next = 6;
                         return auth.getFullUser(ctx);
 
@@ -289,7 +289,7 @@ var detail = exports.detail = function () {
                         user = _context3.sent;
 
                         if (!user) {
-                            ctx.throw(403, 'unvalid token');
+                            ctx.throw(401);
                         }
 
                         _context3.next = 10;
@@ -298,32 +298,43 @@ var detail = exports.detail = function () {
                     case 10:
                         result = _context3.sent;
 
-                        if (!result) {
-                            ctx.throw(403, 'error password');
+                        if (result) {
+                            _context3.next = 14;
+                            break;
                         }
 
+                        response_util.fieldInvalid(ctx, 'User', 'password', 'Invalid password');
+                        return _context3.abrupt('return');
+
+                    case 14:
                         token = null;
-                        _context3.prev = 13;
-                        _context3.next = 16;
+                        _context3.prev = 15;
+                        _context3.next = 18;
                         return _token4.default.findById(id);
 
-                    case 16:
+                    case 18:
                         token = _context3.sent;
-                        _context3.next = 22;
+                        _context3.next = 24;
                         break;
 
-                    case 19:
-                        _context3.prev = 19;
-                        _context3.t0 = _context3['catch'](13);
+                    case 21:
+                        _context3.prev = 21;
+                        _context3.t0 = _context3['catch'](15);
 
-                        ctx.throw(422, 'unvalid id');
+                        ctx.throw(500);
 
-                    case 22:
-                        if (!token) {
-                            ctx.throw(422, 'unvalid id');
+                    case 24:
+                        if (token) {
+                            _context3.next = 27;
+                            break;
                         }
+
+                        response_util.resourceNotExist(ctx, 'Token', 'id');
+                        return _context3.abrupt('return');
+
+                    case 27:
                         if (token.userid != user.id) {
-                            ctx.throw(403, 'no permission');
+                            ctx.throw(403);
                         }
 
                         // response
@@ -331,12 +342,12 @@ var detail = exports.detail = function () {
 
                         ctx.body = response;
 
-                    case 26:
+                    case 30:
                     case 'end':
                         return _context3.stop();
                 }
             }
-        }, _callee3, this, [[13, 19]]);
+        }, _callee3, this, [[15, 21]]);
     }));
 
     return function detail(_x5, _x6) {

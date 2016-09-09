@@ -8,8 +8,8 @@ export default {
     redisOptions: {
 
     },
-    back_address: 'http://localhost:4002/',
-    front_address: 'http://localhost:4001/',
+    back_address: 'http://patchapi.greedlab.com',
+    front_address: 'http://patch.greedlab.com',
 
     mail_config: {
         host: 'md-hk-1.webhostbox.net',

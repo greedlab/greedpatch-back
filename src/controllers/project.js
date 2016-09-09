@@ -253,7 +253,7 @@ export async function addMember(ctx, next) {
         return;
     }
 
-    const project_id = ctx.params.project;
+    const pro1ject_id = ctx.params.project;
     let project = null;
     try {
         project = await Project.findById(project_id);
