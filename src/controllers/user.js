@@ -78,7 +78,7 @@ export async function register(ctx, next) {
         if (!first || first.length > 0) { // no user
             user.role = 1;
         }
-        
+
         const existed = await User.findOne({email});
         if (existed) {
             response_util.resourceAlreadyExists(ctx, 'User', 'email');
