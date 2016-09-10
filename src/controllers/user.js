@@ -74,19 +74,14 @@ export async function register(ctx, next) {
 
     const user = new User({email, password});
     try {
+        const first = await User.findOne();
+        if (!first || first.length > 0) { // no user
+            user.role = 1;
+        }
+        
         const existed = await User.findOne({email});
         if (existed) {
-            ctx.status = 422;
-            ctx.body = {
-                message: 'User is existed',
-                errors: [
-                    {
-                        resource: 'User',
-                        field: 'email',
-                        code: 'already_exists'
-                    }
-                ]
-            };
+            response_util.resourceAlreadyExists(ctx, 'User', 'email');
             return;
         } else {
             await user.save();

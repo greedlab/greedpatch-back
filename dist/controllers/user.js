@@ -79,7 +79,7 @@ var list = exports.list = function () {
 
 var register = exports.register = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
-        var email, password, user, existed, payload, token, response;
+        var email, password, user, first, existed, payload, token, response;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
@@ -123,63 +123,66 @@ var register = exports.register = function () {
                         user = new _user2.default({ email: email, password: password });
                         _context2.prev = 11;
                         _context2.next = 14;
-                        return _user2.default.findOne({ email: email });
+                        return _user2.default.findOne();
 
                     case 14:
+                        first = _context2.sent;
+
+                        if (!first || first.length > 0) {
+                            // no user
+                            user.role = 1;
+                        }
+
+                        _context2.next = 18;
+                        return _user2.default.findOne({ email: email });
+
+                    case 18:
                         existed = _context2.sent;
 
                         if (!existed) {
-                            _context2.next = 21;
+                            _context2.next = 24;
                             break;
                         }
 
-                        ctx.status = 422;
-                        ctx.body = {
-                            message: 'User is existed',
-                            errors: [{
-                                resource: 'User',
-                                field: 'email',
-                                code: 'already_exists'
-                            }]
-                        };
+                        response_util.resourceAlreadyExists(ctx, 'User', 'email');
                         return _context2.abrupt('return');
 
-                    case 21:
-                        _context2.next = 23;
+                    case 24:
+                        _context2.next = 26;
                         return user.save();
 
-                    case 23:
-                        _context2.next = 29;
+                    case 26:
+                        _context2.next = 32;
                         break;
 
-                    case 25:
-                        _context2.prev = 25;
+                    case 28:
+                        _context2.prev = 28;
                         _context2.t0 = _context2['catch'](11);
 
                         debug(_context2.t0);
                         ctx.throw(500);
 
-                    case 29:
+                    case 32:
 
                         // generate new token
                         payload = token_util.generatePayload(user.id);
                         token = token_util.generateTokenFromPayload(payload);
-                        _context2.prev = 31;
-                        _context2.next = 34;
+                        _context2.prev = 34;
+                        _context2.next = 37;
                         return token_redis.add(token, payload.exp);
 
-                    case 34:
-                        _context2.next = 40;
+                    case 37:
+                        _context2.next = 43;
                         break;
 
-                    case 36:
-                        _context2.prev = 36;
-                        _context2.t1 = _context2['catch'](31);
+                    case 39:
+                        _context2.prev = 39;
+                        _context2.t1 = _context2['catch'](34);
 
                         debug(_context2.t1);
                         ctx.throw(500);
 
-                    case 40:
+                    case 43:
 
                         // response
                         response = user.toJSON();
@@ -191,18 +194,18 @@ var register = exports.register = function () {
                         };
 
                         if (!next) {
-                            _context2.next = 45;
+                            _context2.next = 48;
                             break;
                         }
 
                         return _context2.abrupt('return', next());
 
-                    case 45:
+                    case 48:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[11, 25], [31, 36]]);
+        }, _callee2, this, [[11, 28], [34, 39]]);
     }));
 
     return function register(_x3, _x4) {
