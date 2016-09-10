@@ -4,7 +4,7 @@
 
 export default {
     token: 'secret-greedpatch-back-token',
-    mongodb: 'mongodb://dev:dev@localhost:27017/greedpatch-back',
+    mongodb: 'mongodb://greedpatch:hungry96@localhost:27017/greedpatch',
     redisOptions: {
 
     },

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "develop": "PORT=4002 DEBUG=greedpatch-back* nodemon -w dist -e js dist/app.js",
-    "release": "PORT=4002 NODE_ENV=release pm2 start dist/app.js  -i 0 --name greedpatch-back --watch"
+    "release": "PORT=4012 NODE_ENV=release pm2 start dist/app.js  -i 0 --name greedpatch-back --watch"
   },
   "repository": {
     "type": "git",
