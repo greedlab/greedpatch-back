@@ -33,8 +33,6 @@ const upload = multer({ storage: storage });
 
 router
     .post('/', auth.ensureUser, upload.single('file'), file.upload);
-    // .post('/', cors(), upload.single('file'), file.upload);
-    // .post('/', upload.single('file'), file.upload);
 
 export default {
     base_url,
