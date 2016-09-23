@@ -129,7 +129,7 @@ var detail = exports.detail = function () {
                         ctx.throw(500, _context2.t0.message);
 
                     case 11:
-                        if (project) {
+                        if (!(!project || project.status != 0)) {
                             _context2.next = 14;
                             break;
                         }
@@ -234,7 +234,7 @@ var del = exports.del = function () {
 
                         _context3.prev = 18;
                         _context3.next = 21;
-                        return project.remove();
+                        return project.update({ $set: { status: 1 } });
 
                     case 21:
                         _context3.next = 26;
@@ -458,7 +458,7 @@ var listMy = exports.listMy = function () {
                         projects = null;
                         _context6.prev = 3;
                         _context6.next = 6;
-                        return _project2.default.find({ 'members.id': userid }).lean();
+                        return _project2.default.find({ 'members.id': userid, 'status': 0 }).lean();
 
                     case 6:
                         projects = _context6.sent;
@@ -499,7 +499,7 @@ var listMy = exports.listMy = function () {
 
 var addMember = exports.addMember = function () {
     var _ref7 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee7(ctx, next) {
-        var email, pro1ject_id, project, user, add_user, members;
+        var email, project_id, project, user, add_user, members;
         return regeneratorRuntime.wrap(function _callee7$(_context7) {
             while (1) {
                 switch (_context7.prev = _context7.next) {
@@ -516,7 +516,7 @@ var addMember = exports.addMember = function () {
                         return _context7.abrupt('return');
 
                     case 4:
-                        pro1ject_id = ctx.params.project;
+                        project_id = ctx.params.project;
                         project = null;
                         _context7.prev = 6;
                         _context7.next = 9;
@@ -534,18 +534,22 @@ var addMember = exports.addMember = function () {
                         ctx.throw(500, _context7.t0.message);
 
                     case 15:
+                        if (project.status != 0) {
+                            project = null;
+                        }
+
                         if (check.checkProjectResourceEmpty(ctx, project)) {
-                            _context7.next = 17;
+                            _context7.next = 18;
                             break;
                         }
 
                         return _context7.abrupt('return');
 
-                    case 17:
-                        _context7.next = 19;
+                    case 18:
+                        _context7.next = 20;
                         return auth.getUser(ctx);
 
-                    case 19:
+                    case 20:
                         user = _context7.sent;
 
                         if (!user) {
@@ -558,40 +562,40 @@ var addMember = exports.addMember = function () {
                         }
 
                         add_user = null;
-                        _context7.prev = 23;
-                        _context7.next = 26;
+                        _context7.prev = 24;
+                        _context7.next = 27;
                         return _user2.default.findOne({ email: email });
 
-                    case 26:
+                    case 27:
                         add_user = _context7.sent;
-                        _context7.next = 32;
+                        _context7.next = 33;
                         break;
 
-                    case 29:
-                        _context7.prev = 29;
-                        _context7.t1 = _context7['catch'](23);
+                    case 30:
+                        _context7.prev = 30;
+                        _context7.t1 = _context7['catch'](24);
 
                         ctx.throw(500, _context7.t1.message);
 
-                    case 32:
+                    case 33:
                         if (add_user) {
-                            _context7.next = 35;
+                            _context7.next = 36;
                             break;
                         }
 
                         response_util.resourceNotExist(ctx, 'User', 'email');
                         return _context7.abrupt('return');
 
-                    case 35:
+                    case 36:
                         if (!project.isMember(add_user.id)) {
-                            _context7.next = 38;
+                            _context7.next = 39;
                             break;
                         }
 
                         response_util.resourceAlreadyExists(ctx, 'User', 'email');
                         return _context7.abrupt('return');
 
-                    case 38:
+                    case 39:
                         members = project.members || [];
 
                         members.push({
@@ -599,30 +603,30 @@ var addMember = exports.addMember = function () {
                             email: add_user.email,
                             role: 0
                         });
-                        _context7.prev = 40;
-                        _context7.next = 43;
+                        _context7.prev = 41;
+                        _context7.next = 44;
                         return project.update({ $set: { members: members } });
 
-                    case 43:
-                        _context7.next = 48;
+                    case 44:
+                        _context7.next = 49;
                         break;
 
-                    case 45:
-                        _context7.prev = 45;
-                        _context7.t2 = _context7['catch'](40);
+                    case 46:
+                        _context7.prev = 46;
+                        _context7.t2 = _context7['catch'](41);
 
                         ctx.throw(500, _context7.t2.message);
 
-                    case 48:
+                    case 49:
                         // response
                         ctx.status = 204;
 
-                    case 49:
+                    case 50:
                     case 'end':
                         return _context7.stop();
                 }
             }
-        }, _callee7, this, [[6, 12], [23, 29], [40, 45]]);
+        }, _callee7, this, [[6, 12], [24, 30], [41, 46]]);
     }));
 
     return function addMember(_x13, _x14) {
@@ -759,18 +763,22 @@ var delMember = exports.delMember = function () {
                         ctx.throw(500, _context9.t0.message);
 
                     case 15:
+                        if (project.status != 0) {
+                            project = null;
+                        }
+
                         if (check.checkProjectResourceEmpty(ctx, project)) {
-                            _context9.next = 17;
+                            _context9.next = 18;
                             break;
                         }
 
                         return _context9.abrupt('return');
 
-                    case 17:
-                        _context9.next = 19;
+                    case 18:
+                        _context9.next = 20;
                         return auth.getUser(ctx);
 
-                    case 19:
+                    case 20:
                         user = _context9.sent;
 
                         if (!user) {
@@ -789,42 +797,42 @@ var delMember = exports.delMember = function () {
                         index = project.indexOf(member_id);
 
                         if (!(index < 0)) {
-                            _context9.next = 27;
+                            _context9.next = 28;
                             break;
                         }
 
                         response_util.fieldInvalid(ctx, 'Project', 'member', 'member is not in the project');
                         return _context9.abrupt('return');
 
-                    case 27:
+                    case 28:
                         members = project.members;
 
                         members.splice(index, 1);
 
-                        _context9.prev = 29;
-                        _context9.next = 32;
+                        _context9.prev = 30;
+                        _context9.next = 33;
                         return project.update({ $set: { members: members } });
 
-                    case 32:
-                        _context9.next = 37;
+                    case 33:
+                        _context9.next = 38;
                         break;
 
-                    case 34:
-                        _context9.prev = 34;
-                        _context9.t1 = _context9['catch'](29);
+                    case 35:
+                        _context9.prev = 35;
+                        _context9.t1 = _context9['catch'](30);
 
                         ctx.throw(500);
 
-                    case 37:
+                    case 38:
 
                         ctx.status = 204;
 
-                    case 38:
+                    case 39:
                     case 'end':
                         return _context9.stop();
                 }
             }
-        }, _callee9, this, [[6, 12], [29, 34]]);
+        }, _callee9, this, [[6, 12], [30, 35]]);
     }));
 
     return function delMember(_x17, _x18) {

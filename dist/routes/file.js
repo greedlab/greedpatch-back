@@ -60,6 +60,8 @@ var storage = _koaMulter2.default.diskStorage({
 var upload = (0, _koaMulter2.default)({ storage: storage });
 
 router.post('/', auth.ensureUser, upload.single('file'), file.upload);
+// .post('/', cors(), upload.single('file'), file.upload);
+// .post('/', upload.single('file'), file.upload);
 
 exports.default = {
     base_url: base_url,

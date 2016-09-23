@@ -73,6 +73,9 @@ export async function del(ctx, next) {
     } catch (err) {
         ctx.throw(500);
     }
+    if (project.status != 0) {
+        project = null;
+    }
     if (!check.checkProjectResourceEmpty(ctx, project)) {
         return;
     }
@@ -208,6 +211,9 @@ export async function create(ctx, next) {
         ctx.throw(500, err);
     }
 
+    if (project.status != 0) {
+        project = null;
+    }
     if (!check.checkProjectResourceEmpty(ctx, project)) {
         return;
     }

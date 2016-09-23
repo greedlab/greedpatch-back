@@ -72,7 +72,7 @@ export async function detail(ctx, next) {
     } catch (err) {
         ctx.throw(500, err.message);
     }
-    if (!project) {
+    if (!project || project.status != 0) {
         response_util.projectNotExist(ctx);
         return;
     }
@@ -125,7 +125,8 @@ export async function del(ctx, next) {
     }
 
     try {
-        await project.remove();
+        await project.update({$set: {status: 1}});
+        // await project.remove();
     } catch (err) {
         ctx.throw(500, err.message);
     }
@@ -230,7 +231,7 @@ export async function listMy(ctx, next) {
 
     let projects = null;
     try {
-        projects = await Project.find({'members.id': userid}).lean();
+        projects = await Project.find({'members.id': userid, 'status': 0}).lean();
     } catch (err) {
         ctx.throw(500);
     }
@@ -253,12 +254,15 @@ export async function addMember(ctx, next) {
         return;
     }
 
-    const pro1ject_id = ctx.params.project;
+    const project_id = ctx.params.project;
     let project = null;
     try {
         project = await Project.findById(project_id);
     } catch (err) {
         ctx.throw(500, err.message);
+    }
+    if (project.status != 0) {
+        project = null;
     }
     if (!check.checkProjectResourceEmpty(ctx, project)) {
         return;
@@ -362,6 +366,9 @@ export async function delMember(ctx, next) {
         project = await Project.findById(project_id);
     } catch (err) {
         ctx.throw(500, err.message);
+    }
+    if (project.status != 0) {
+        project = null;
     }
     if (!check.checkProjectResourceEmpty(ctx, project)) {
         return;

@@ -18,6 +18,7 @@ var Project = new _mongoose2.default.Schema({
     bundle_id: { type: String },
     name: { type: String, required: true },
     introduction: { type: String },
+    status: { type: Number, default: 0 },
     members: { type: Array }
 });
 

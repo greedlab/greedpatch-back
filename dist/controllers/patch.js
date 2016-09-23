@@ -161,18 +161,22 @@ var del = exports.del = function () {
                         ctx.throw(500);
 
                     case 24:
+                        if (project.status != 0) {
+                            project = null;
+                        }
+
                         if (check.checkProjectResourceEmpty(ctx, project)) {
-                            _context2.next = 26;
+                            _context2.next = 27;
                             break;
                         }
 
                         return _context2.abrupt('return');
 
-                    case 26:
-                        _context2.next = 28;
+                    case 27:
+                        _context2.next = 29;
                         return auth.getUser(ctx);
 
-                    case 28:
+                    case 29:
                         user = _context2.sent;
 
                         if (!user) {
@@ -184,30 +188,30 @@ var del = exports.del = function () {
                             }
                         }
 
-                        _context2.prev = 31;
-                        _context2.next = 34;
+                        _context2.prev = 32;
+                        _context2.next = 35;
                         return patch.remove();
 
-                    case 34:
-                        _context2.next = 39;
+                    case 35:
+                        _context2.next = 40;
                         break;
 
-                    case 36:
-                        _context2.prev = 36;
-                        _context2.t2 = _context2['catch'](31);
+                    case 37:
+                        _context2.prev = 37;
+                        _context2.t2 = _context2['catch'](32);
 
                         ctx.throw(500);
 
-                    case 39:
+                    case 40:
 
                         ctx.status = 204;
 
-                    case 40:
+                    case 41:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[3, 9], [15, 21], [31, 36]]);
+        }, _callee2, this, [[3, 9], [15, 21], [32, 37]]);
     }));
 
     return function del(_x3, _x4) {
@@ -462,18 +466,23 @@ var create = exports.create = function () {
                         ctx.throw(500, _context5.t0);
 
                     case 24:
+
+                        if (project.status != 0) {
+                            project = null;
+                        }
+
                         if (check.checkProjectResourceEmpty(ctx, project)) {
-                            _context5.next = 26;
+                            _context5.next = 27;
                             break;
                         }
 
                         return _context5.abrupt('return');
 
-                    case 26:
-                        _context5.next = 28;
+                    case 27:
+                        _context5.next = 29;
                         return auth.getUser(ctx);
 
-                    case 28:
+                    case 29:
                         user = _context5.sent;
 
                         if (!user) {
@@ -486,57 +495,57 @@ var create = exports.create = function () {
                         }
 
                         existed = true;
-                        _context5.prev = 32;
-                        _context5.next = 35;
+                        _context5.prev = 33;
+                        _context5.next = 36;
                         return _patch2.default.findOne({
                             project_id: project_id,
                             project_version: project_version,
                             patch_version: patch_version
                         });
 
-                    case 35:
+                    case 36:
                         existed = _context5.sent;
-                        _context5.next = 41;
+                        _context5.next = 42;
                         break;
 
-                    case 38:
-                        _context5.prev = 38;
-                        _context5.t1 = _context5['catch'](32);
+                    case 39:
+                        _context5.prev = 39;
+                        _context5.t1 = _context5['catch'](33);
 
                         ctx.throw(500, _context5.t1);
 
-                    case 41:
+                    case 42:
                         if (!existed) {
-                            _context5.next = 44;
+                            _context5.next = 45;
                             break;
                         }
 
                         response_util.patchExisted(ctx);
                         return _context5.abrupt('return');
 
-                    case 44:
+                    case 45:
 
                         // get max patch_version
                         patch_version_objects = null;
-                        _context5.prev = 45;
-                        _context5.next = 48;
+                        _context5.prev = 46;
+                        _context5.next = 49;
                         return _patch2.default.find({
                             project_id: project_id,
                             project_version: project_version
                         }, { patch_version: 1 }).sort({ patch_version: -1 }).limit(1);
 
-                    case 48:
+                    case 49:
                         patch_version_objects = _context5.sent;
-                        _context5.next = 54;
+                        _context5.next = 55;
                         break;
 
-                    case 51:
-                        _context5.prev = 51;
-                        _context5.t2 = _context5['catch'](45);
+                    case 52:
+                        _context5.prev = 52;
+                        _context5.t2 = _context5['catch'](46);
 
                         ctx.throw(500);
 
-                    case 54:
+                    case 55:
 
                         debug(patch_version_objects);
                         patch_version = 1;
@@ -553,32 +562,32 @@ var create = exports.create = function () {
                             patch_url: patch_url
                         };
                         patch = new _patch2.default(patch_object);
-                        _context5.prev = 59;
-                        _context5.next = 62;
+                        _context5.prev = 60;
+                        _context5.next = 63;
                         return patch.save();
 
-                    case 62:
-                        _context5.next = 67;
+                    case 63:
+                        _context5.next = 68;
                         break;
 
-                    case 64:
-                        _context5.prev = 64;
-                        _context5.t3 = _context5['catch'](59);
+                    case 65:
+                        _context5.prev = 65;
+                        _context5.t3 = _context5['catch'](60);
 
                         ctx.throw(500, _context5.t3);
 
-                    case 67:
+                    case 68:
                         response = patch.toJSON();
 
                         ctx.status = 201;
                         ctx.body = response;
 
-                    case 70:
+                    case 71:
                     case 'end':
                         return _context5.stop();
                 }
             }
-        }, _callee5, this, [[15, 21], [32, 38], [45, 51], [59, 64]]);
+        }, _callee5, this, [[15, 21], [33, 39], [46, 52], [60, 65]]);
     }));
 
     return function create(_x9, _x10) {
