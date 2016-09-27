@@ -17,7 +17,7 @@ _mongoose2.default.Promise = global.Promise; /**
 var Permission = new _mongoose2.default.Schema({
     type: { type: Number, default: 0, unique: true },
     permission: { type: String, default: 0 },
-    domains: { type: Array }
+    domains: { type: String }
 });
 
 exports.default = _mongoose2.default.model('permission', Permission);

@@ -25,7 +25,7 @@ var Router = require('koa-router');
 var base_url = '/projects';
 var router = new Router({ prefix: base_url });
 
-router.get('/', _auth.ensureUser, _auth.ensureManager, project.listAll).post('/', _auth.ensureUser, project.create).get('/my', _auth.ensureUser, project.listMy).get('/:id', _auth.ensureUser, project.detail).post('/:id', _auth.ensureUser, project.update).delete('/:id', _auth.ensureUser, project.del).post('/:project/members', _auth.ensureUser, project.addMember).get('/:project/members', _auth.ensureUser, project.listMembers).delete('/:project/members/:member', _auth.ensureUser, project.delMember).post('/:project/patches', _auth.ensureUser, patch.create).get('/:project/patches', _auth.ensureUser, patch.list).get('/:project/versions', _auth.ensureUser, patch.listProjectVersions);
+router.get('/', _auth.ensureUser, _auth.ensureManager, project.listAll).post('/', _auth.ensureUser, project.create).get('/my', _auth.ensureUser, project.listMy).post('/:id/status', _auth.ensureUser, project.updateStatus).get('/:id', _auth.ensureUser, project.detail).post('/:id', _auth.ensureUser, project.update).delete('/:id', _auth.ensureUser, project.del).post('/:project/members', _auth.ensureUser, project.addMember).get('/:project/members', _auth.ensureUser, project.listMembers).delete('/:project/members/:member', _auth.ensureUser, project.delMember).post('/:project/patches', _auth.ensureUser, patch.create).get('/:project/patches', _auth.ensureUser, patch.list).get('/:project/versions', _auth.ensureUser, patch.listProjectVersions);
 
 exports.default = {
     base_url: base_url,

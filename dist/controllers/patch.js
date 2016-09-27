@@ -369,7 +369,7 @@ var list = exports.list = function () {
                         _context4.next = 20;
                         return _patch2.default.find({
                             project_id: project_id
-                        }).lean();
+                        }).sort({ _id: -1 }).lean();
 
                     case 20:
                         patches = _context4.sent;

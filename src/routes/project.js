@@ -15,6 +15,7 @@ router
     .get('/', ensureUser, ensureManager, project.listAll)
     .post('/', ensureUser, project.create)
     .get('/my', ensureUser, project.listMy)
+    .post('/:id/status', ensureUser, project.updateStatus)
     .get('/:id', ensureUser, project.detail)
     .post('/:id', ensureUser, project.update)
     .delete('/:id', ensureUser, project.del)

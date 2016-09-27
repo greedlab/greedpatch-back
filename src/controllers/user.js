@@ -33,9 +33,7 @@ export async function list(ctx, next) {
     try {
         let users = await User.find({}, {password: 0, __v: 0});
         users = users || [];
-        ctx.body = {
-            users
-        };
+        ctx.body = users;
     } catch (err) {
         if (err === 404 || err.name === 'CastError') {
             ctx.throw(404);
@@ -270,9 +268,29 @@ export async function myProfile(ctx, next) {
     }
     const response = user.toJSON();
     ctx.body = response;
-    if (next) {
-        return next();
+}
+
+/**
+ * get user's profile. only administrator can call this function
+ *
+ * @example curl -H "Authorization: Bearer <token>" -X GET localhost:4002/users/me/profile
+ * @param ctx
+ * @param next
+ */
+export async function profile(ctx, next) {
+    const id = ctx.params.id;
+    let user = null;
+    try {
+        user = await User.findById(id, {password: 0, __v: 0});
+    } catch (err) {
+        ctx.throw(500);
     }
+    if (!user) {
+        response_util.resourceNotExist(ctx, 'User', 'id');
+        return;
+    }
+    const response = user.toJSON();
+    ctx.body = response;
 }
 
 /**
@@ -453,9 +471,6 @@ export async function updatePassword(ctx, next) {
     }
 
     ctx.status = 204;
-    if (next) {
-        return next();
-    }
 }
 
 /**
@@ -469,16 +484,10 @@ export async function updatePassword(ctx, next) {
 export async function updateStatus(ctx, next) {
     debug(ctx.request.body);
     const userid = ctx.params.id;
-    if (!userid) {
-        ctx.throw(400, 'id is empty');
-    }
-
     const status = ctx.request.body.status;
-    if (!status) {
-        ctx.throw(400, 'status is empty');
-    }
     if (status < 0 || status > 1) {
-        ctx.throw(400, 'unvalid status');
+        response_util.fieldInvalid(ctx, 'User', 'status', 'Invalid status');
+        return;
     }
 
     // get user
@@ -489,7 +498,8 @@ export async function updateStatus(ctx, next) {
         ctx.throw(500);
     }
     if (!user) {
-        ctx.throw(422, 'user is not existed');
+        response_util.resourceNotExist(ctx, 'User', 'id');
+        return;
     }
 
     // update user's status
@@ -500,8 +510,5 @@ export async function updateStatus(ctx, next) {
     }
 
     ctx.status = 204;
-    if (next) {
-        return next();
-    }
 }
 

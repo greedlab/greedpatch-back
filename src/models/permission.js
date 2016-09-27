@@ -8,7 +8,7 @@ mongoose.Promise = global.Promise;
 const Permission = new mongoose.Schema({
     type: {type: Number, default: 0, unique: true},
     permission: {type: String, default: 0},
-    domains: {type: Array}
+    domains: {type: String}
 });
 
 export default mongoose.model('permission', Permission);

@@ -125,8 +125,7 @@ export async function del(ctx, next) {
     }
 
     try {
-        await project.update({$set: {status: 1}});
-        // await project.remove();
+        await project.remove();
     } catch (err) {
         ctx.throw(500, err.message);
     }
@@ -180,9 +179,54 @@ export async function update(ctx, next) {
         object.bundle_id = bundle_id;
     }
     try {
-        await project.update({$set:object});
+        await project.update({$set: object});
     } catch (err) {
         ctx.throw(500);
+    }
+
+    // response
+    ctx.status = 204;
+}
+
+/**
+ * update status
+ *
+ * @param ctx
+ * @param next
+ */
+export async function updateStatus(ctx, next) {
+    const id = ctx.params.id;
+    const status = ctx.request.body.status;
+    if (status < 0 || status > 1) {
+        response_util.fieldInvalid(ctx,'Project','status','Invalid status');
+        return;
+    }
+
+    let project = null;
+    try {
+        project = await Project.findById(id);
+    } catch (err) {
+        ctx.throw(500, err.message);
+    }
+    if (!check.checkProjectResourceEmpty(ctx, project)) {
+        return;
+    }
+
+    const user = await auth.getUser(ctx);
+    if (!user) {
+        ctx.throw(401);
+    }
+
+    if (user.role != 1) { // not manager
+        if (!project.isManager(user.id)) {
+            ctx.throw(403, 'no permission');
+        }
+    }
+
+    try {
+        await project.update({$set: {status: status}});
+    } catch (err) {
+        ctx.throw(500, err.message);
     }
 
     // response
@@ -207,7 +251,7 @@ export async function listAll(ctx, next) {
 
     let projects = null;
     try {
-        projects = await Project.find().lean();
+        projects = await Project.find().sort({_id: -1}).lean();
     } catch (err) {
         ctx.throw(500);
     }
@@ -231,7 +275,7 @@ export async function listMy(ctx, next) {
 
     let projects = null;
     try {
-        projects = await Project.find({'members.id': userid, 'status': 0}).lean();
+        projects = await Project.find({'members.id': userid, 'status': 0}).sort({_id: -1}).lean();
     } catch (err) {
         ctx.throw(500);
     }

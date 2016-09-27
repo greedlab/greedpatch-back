@@ -169,7 +169,7 @@ export async function list(ctx, next) {
 
     let patches = await Patch.find({
         project_id
-    }).lean();
+    }).sort({_id: -1}).lean();
     patches = patches || [];
     ctx.body = patches;
 }
