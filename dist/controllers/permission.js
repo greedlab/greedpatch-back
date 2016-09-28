@@ -22,28 +22,23 @@ var get = exports.get = function () {
                 switch (_context.prev = _context.next) {
                     case 0:
                         type = ctx.params.type;
-
-                        if (!type) {
-                            ctx.throw(400, 'type can not be empty');
-                        }
-
                         permission = null;
-                        _context.prev = 3;
-                        _context.next = 6;
+                        _context.prev = 2;
+                        _context.next = 5;
                         return _permission2.default.find({ type: type }, { _id: 0, __v: 0 }).limit(1);
 
-                    case 6:
+                    case 5:
                         permission = _context.sent;
-                        _context.next = 12;
+                        _context.next = 11;
                         break;
 
-                    case 9:
-                        _context.prev = 9;
-                        _context.t0 = _context['catch'](3);
+                    case 8:
+                        _context.prev = 8;
+                        _context.t0 = _context['catch'](2);
 
-                        ctx.throw(500, _context.t0.message);
+                        ctx.throw(500);
 
-                    case 12:
+                    case 11:
                         response = null;
 
                         if (permission && permission.length > 0) {
@@ -60,18 +55,18 @@ var get = exports.get = function () {
                         ctx.body = response;
 
                         if (!next) {
-                            _context.next = 17;
+                            _context.next = 16;
                             break;
                         }
 
                         return _context.abrupt('return', next());
 
-                    case 17:
+                    case 16:
                     case 'end':
                         return _context.stop();
                 }
             }
-        }, _callee, this, [[3, 9]]);
+        }, _callee, this, [[2, 8]]);
     }));
 
     return function get(_x, _x2) {

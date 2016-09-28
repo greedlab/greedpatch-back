@@ -77,7 +77,7 @@ var list = exports.list = function () {
 
 var register = exports.register = function () {
     var _ref2 = (0, _bluebird.coroutine)(regeneratorRuntime.mark(function _callee2(ctx, next) {
-        var email, password, user, first, existed, payload, token, response;
+        var email, permissions, permission, domain, password, user, first, existed, payload, token, response;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
@@ -100,30 +100,89 @@ var register = exports.register = function () {
                         return _context2.abrupt('return');
 
                     case 5:
+                        permissions = null;
+                        _context2.prev = 6;
+                        _context2.next = 9;
+                        return _permission2.default.find({ type: 0 }, { _id: 0, __v: 0 }).limit(1);
+
+                    case 9:
+                        permissions = _context2.sent;
+                        _context2.next = 15;
+                        break;
+
+                    case 12:
+                        _context2.prev = 12;
+                        _context2.t0 = _context2['catch'](6);
+
+                        ctx.throw(500);
+
+                    case 15:
+                        permission = null;
+
+                        if (permissions && permissions.length > 0) {
+                            permission = permissions[0].toJSON();
+                        }
+
+                        if (!(permission != null)) {
+                            _context2.next = 28;
+                            break;
+                        }
+
+                        if (!(permission.permission == 2)) {
+                            _context2.next = 25;
+                            break;
+                        }
+
+                        // fixed emails can register
+                        domain = regex.getDomain(email);
+
+                        if (!(domain && permission.domains && permission.domains.indexOf(domain) < 0)) {
+                            _context2.next = 23;
+                            break;
+                        }
+
+                        ctx.throw(403);
+                        return _context2.abrupt('return');
+
+                    case 23:
+                        _context2.next = 28;
+                        break;
+
+                    case 25:
+                        if (!(permission.permission == 1)) {
+                            _context2.next = 28;
+                            break;
+                        }
+
+                        // all can not register
+                        ctx.throw(403);
+                        return _context2.abrupt('return');
+
+                    case 28:
                         password = ctx.request.body.password;
 
                         if (check.checkUserEmpty(ctx, 'password', password)) {
-                            _context2.next = 8;
+                            _context2.next = 31;
                             break;
                         }
 
                         return _context2.abrupt('return');
 
-                    case 8:
+                    case 31:
                         if (check.checkValidPassword(ctx, password)) {
-                            _context2.next = 10;
+                            _context2.next = 33;
                             break;
                         }
 
                         return _context2.abrupt('return');
 
-                    case 10:
+                    case 33:
                         user = new _user2.default({ email: email, password: password });
-                        _context2.prev = 11;
-                        _context2.next = 14;
+                        _context2.prev = 34;
+                        _context2.next = 37;
                         return _user2.default.findOne();
 
-                    case 14:
+                    case 37:
                         first = _context2.sent;
 
                         if (!first || first.length > 0) {
@@ -131,56 +190,56 @@ var register = exports.register = function () {
                             user.role = 1;
                         }
 
-                        _context2.next = 18;
+                        _context2.next = 41;
                         return _user2.default.findOne({ email: email });
 
-                    case 18:
+                    case 41:
                         existed = _context2.sent;
 
                         if (!existed) {
-                            _context2.next = 24;
+                            _context2.next = 47;
                             break;
                         }
 
                         response_util.resourceAlreadyExists(ctx, 'User', 'email');
                         return _context2.abrupt('return');
 
-                    case 24:
-                        _context2.next = 26;
+                    case 47:
+                        _context2.next = 49;
                         return user.save();
 
-                    case 26:
-                        _context2.next = 32;
+                    case 49:
+                        _context2.next = 55;
                         break;
 
-                    case 28:
-                        _context2.prev = 28;
-                        _context2.t0 = _context2['catch'](11);
-
-                        debug(_context2.t0);
-                        ctx.throw(500);
-
-                    case 32:
-
-                        // generate new token
-                        payload = token_util.generatePayload(user.id);
-                        token = token_util.generateTokenFromPayload(payload);
-                        _context2.prev = 34;
-                        _context2.next = 37;
-                        return token_redis.add(token, payload.exp);
-
-                    case 37:
-                        _context2.next = 43;
-                        break;
-
-                    case 39:
-                        _context2.prev = 39;
+                    case 51:
+                        _context2.prev = 51;
                         _context2.t1 = _context2['catch'](34);
 
                         debug(_context2.t1);
                         ctx.throw(500);
 
-                    case 43:
+                    case 55:
+
+                        // generate new token
+                        payload = token_util.generatePayload(user.id);
+                        token = token_util.generateTokenFromPayload(payload);
+                        _context2.prev = 57;
+                        _context2.next = 60;
+                        return token_redis.add(token, payload.exp);
+
+                    case 60:
+                        _context2.next = 66;
+                        break;
+
+                    case 62:
+                        _context2.prev = 62;
+                        _context2.t2 = _context2['catch'](57);
+
+                        debug(_context2.t2);
+                        ctx.throw(500);
+
+                    case 66:
 
                         // response
                         response = user.toJSON();
@@ -192,18 +251,18 @@ var register = exports.register = function () {
                         };
 
                         if (!next) {
-                            _context2.next = 48;
+                            _context2.next = 71;
                             break;
                         }
 
                         return _context2.abrupt('return', next());
 
-                    case 48:
+                    case 71:
                     case 'end':
                         return _context2.stop();
                 }
             }
-        }, _callee2, this, [[11, 28], [34, 39]]);
+        }, _callee2, this, [[6, 12], [34, 51], [57, 62]]);
     }));
 
     return function register(_x3, _x4) {
@@ -1121,6 +1180,10 @@ var _setPwdToken = require('../models/setPwdToken');
 
 var _setPwdToken2 = _interopRequireDefault(_setPwdToken);
 
+var _permission = require('../models/permission');
+
+var _permission2 = _interopRequireDefault(_permission);
+
 var _token = require('../redis/token');
 
 var token_redis = _interopRequireWildcard(_token);
@@ -1173,9 +1236,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- * Created by Bell on 16/8/10.
- */
-
-var debug = new _debug2.default(_package2.default.name);
+var debug = new _debug2.default(_package2.default.name); /**
+                                                          * Created by Bell on 16/8/10.
+                                                          */
 //# sourceMappingURL=user.js.map

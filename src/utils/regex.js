@@ -17,3 +17,16 @@ export function validEmail(input) {
     const reg = /^[0-9a-zA-Z._-]+@([0-9a-zA-Z]+[0-9a-zA-Z_-]*)(\.[0-9a-zA-Z]+[0-9a-zA-Z_-]*)+$/;
     return reg.test(input);
 }
+
+/**
+ * get domain from email
+ *
+ * @param email
+ */
+export function getDomain(email) {
+    const array = email.split('@');
+    if (array != null && array.length === 2) {
+        return array[1];
+    }
+    return null;
+}

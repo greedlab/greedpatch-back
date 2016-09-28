@@ -6,6 +6,7 @@ import passport from 'koa-passport';
 import url from 'url';
 import User from '../models/user';
 import SetPwdToken from '../models/setPwdToken';
+import Permission from '../models/permission';
 import * as token_redis from '../redis/token';
 import * as user_redis from '../redis/user';
 import * as encrypt from '../utils/encrypt';
@@ -60,6 +61,29 @@ export async function register(ctx, next) {
     }
     if (!check.checkValidEmail(ctx, email)) {
         return;
+    }
+
+    let permissions = null;
+    try {
+        permissions = await Permission.find({type: 0}, {_id: 0, __v: 0}).limit(1);
+    } catch (err) {
+        ctx.throw(500);
+    }
+    let permission = null;
+    if (permissions && permissions.length > 0) {
+        permission = permissions[0].toJSON();
+    }
+    if (permission != null) {
+        if (permission.permission == 2) { // fixed emails can register
+            const domain = regex.getDomain(email);
+            if (domain && permission.domains && permission.domains.indexOf(domain) < 0) {
+                ctx.throw(403);
+                return;
+            }
+        } else if (permission.permission == 1) { // all can not register
+            ctx.throw(403);
+            return;
+        }
     }
 
     const password = ctx.request.body.password;

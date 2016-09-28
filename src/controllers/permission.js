@@ -16,15 +16,11 @@ const debug = new Debug(pkg.name);
  */
 export async function get(ctx, next) {
     const type = ctx.params.type;
-    if (!type) {
-        ctx.throw(400, 'type can not be empty');
-    }
-
     let permission = null;
     try {
         permission = await Permission.find({type},{_id:0, __v:0}).limit(1);
     } catch (err) {
-        ctx.throw(500,err.message);
+        ctx.throw(500);
     }
     let response = null;
     if (permission && permission.length > 0) {
