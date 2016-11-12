@@ -1,13 +1,13 @@
-# node-front-template
+# greedpatch-back
 
-基于 node.js 的后端模板
+[greedpatch](https://patch.greedlab.com/) 的后端
 
 [English](README.md) | 中文
 
 ## clone
 
 ```
-$ git clone https://github.com/greedlab/node-back-template.git
+$ git clone https://github.com/greedlab/greedpatch-back.git
 ```
 
 ## 开发环境

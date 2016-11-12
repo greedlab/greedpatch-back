@@ -1,13 +1,13 @@
-# node-front-template
+# greedpatch-back
 
-template for back end
+back end for [greedpatch](https://patch.greedlab.com/)
 
 English | [中文](README-CN.md)
 
 ## clone
 
 ```
-$ git clone https://github.com/greedlab/node-back-template.git
+$ git clone https://github.com/greedlab/greedpatch-back.git
 ```
 
 ## develop env
@@ -27,8 +27,3 @@ $ npm install -g pm2
 $ npm install --production
 $ npm run release
 ```
-
-## Thanks
-
-* [koa2-api-boilerplate](https://github.com/adrianObel/koa2-api-boilerplate)
-
