@@ -42,6 +42,7 @@ jspm_packages
 # config
 **/env/develop.js*
 **/env/release.js*
+sync-config.sh
 
 # temp
 dump.rdb
